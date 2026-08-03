@@ -4,9 +4,7 @@ These numbers are set casually. We are going to understand it in a complete sens
 
 # Setup: the same MLP, cleaned up
 
-We keep the exact [[Building of MLP|MLP]] from before (11,000 parameters; 200,000 steps; batch size 32) but the code is refactored: the *magic numbers* (`10` embeddings, `200` hidden neurons, block size `3`) are pulled out into named variables, and we split the data into **train / dev / test** splits. We also use `@torch.no_grad()` when evaluating — this tells PyTorch that no backward pass will ever be called on this computation, so it skips building the graph and everything is much faster.
-
-Trained as-is, the network reaches train & validation loss of about **2.16 – 2.17**. That's our baseline. Now let's scrutinize it.
+We keep the exact [[Building of MLP|MLP]] from before (11,000 parameters; 200,000 steps; batch size 32) but the code is refactored: the *magic numbers* (`10` embeddings, `200` hidden neurons, block size `3`) are pulled out into named variables, and we split the data into **train / dev / test** splits.
 
 # Problem 1: the network is confidently wrong at initialization
 
