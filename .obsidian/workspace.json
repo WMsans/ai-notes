@@ -1,0 +1,237 @@
+{
+  "main": {
+    "id": "633d8265fd388eb2",
+    "type": "split",
+    "children": [
+      {
+        "id": "9504d18e0295486a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d2b2442283d19d7e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Building of MLP.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Building of MLP"
+            }
+          },
+          {
+            "id": "f407ca9ab773b265",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Activations & Gradients, BatchNorm in MLP.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Activations & Gradients, BatchNorm in MLP"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "07546af7c89669c3",
+    "type": "split",
+    "children": [
+      {
+        "id": "4282133e874b1ef2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "df0ab196bbe1f2c7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "9a4647883301ca8a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "de75a79179337631",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 222.0040512084961,
+    "collapsed": true
+  },
+  "right": {
+    "id": "e3123548f92d1f9d",
+    "type": "split",
+    "children": [
+      {
+        "id": "4a151eeeb0aa17dd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f1a35d9a2e3a371f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Activations & Gradients, BatchNorm in MLP.md",
+                "followCursor": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          },
+          {
+            "id": "31b8237ce9eff381",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          },
+          {
+            "id": "934a96762a8cfa8b",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "f515925f3fedab3f",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "1989e634bd5f5ff2",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Building of MLP.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Building of MLP"
+            }
+          },
+          {
+            "id": "cf1bf342c32c168d",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Building of MLP.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Building of MLP"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 305.06585693359375
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "f407ca9ab773b265",
+  "lastOpenFiles": [
+    "Building of MLP.md",
+    "Activations & Gradients, BatchNorm in MLP.md",
+    "Building of Bigram.md",
+    "Building of micrograd.md",
+    "Likelihood.md",
+    "Pasted image 20260803102352.png",
+    "Pasted image 20260803102247.png",
+    "Pasted image 20260803100737.png",
+    "MLP Computation Graph.html",
+    "Pasted image 20260731225921.png",
+    "Pasted image 20260731225845.png",
+    "One-hot encoding.md",
+    "Logits.md",
+    "Dot product.md",
+    "Softmax.md",
+    "Pasted image 20260725121953.png",
+    "Pasted image 20260725103923.png",
+    "Pasted image 20260725103839.png",
+    "Pasted image 20260722121621.png",
+    "Pasted image 20260721183756.png",
+    "create a link.md"
+  ]
+}

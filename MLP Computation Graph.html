@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLP — the network, drawn concretely</title>
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    display:flex; flex-direction:column;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:#f7f8fa; color:#1c2733; overflow:hidden;
+  }
+
+  header{
+    flex:0 0 auto; display:flex; align-items:center; gap:14px;
+    padding:9px 16px; background:#fff; border-bottom:1px solid #e2e7ec; z-index:60;
+  }
+  header h1{ font-size:15px; margin:0; font-weight:800; }
+  header h1 .src{ font-weight:500; color:#7a8894; font-size:12px; margin-left:8px; }
+  header .chips{ margin-left:auto; display:flex; gap:6px; }
+  header .chip{
+    font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px;
+    background:#eef2f5; color:#566370; border:1px solid #d8e0e6;
+  }
+
+  #viewport{ flex:1; position:relative; overflow:hidden; cursor:grab; touch-action:none;
+    user-select:none; -webkit-user-select:none; }
+  #viewport.dragging{ cursor:grabbing; }
+  #viewport.dragging #panel{ user-select:none; -webkit-user-select:none; }
+  #world{
+    position:absolute; top:0; left:0; width:2700px; height:1250px;
+    transform-origin:0 0; will-change:transform;
+    background:#fcfdfd;
+    background-image:radial-gradient(#d9e0e6 1.1px, transparent 1.1px);
+    background-size:26px 26px;
+  }
+
+  /* ---------- SVG text helpers ---------- */
+  .cap{ font-size:12px; font-weight:800; fill:#44525e; }
+  .cap small{ font-size:9.5px; font-weight:600; fill:#7d8b97; }
+  .tiny{ font-size:9px; fill:#546e7a; }
+  .op-lab{ font-size:10px; font-weight:800; fill:#b45309; }
+  .val{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10px; fill:#0b3d5c; }
+  .valbig{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px; font-weight:700; fill:#0b3d5c; }
+
+  .conn{ stroke-opacity:.38; }
+  .conn.plus{ stroke:#1a73e8; }
+  .conn.minus{ stroke:#d93025; }
+  .conn.hl{ stroke-opacity:1; stroke-width:2.4; }
+  .wlab{ font-size:9px; font-family:ui-monospace, Menlo, Consolas, monospace; fill:#33414d; opacity:0; pointer-events:none; }
+  .wlab rect{ fill:#fff; stroke:#cfd8dc; }
+  .wlab.on{ opacity:1; }
+
+  .hlrow{ filter:drop-shadow(0 0 5px rgba(242,140,40,.85)); }
+
+  .arrow-head{ fill:#90a4ae; }
+
+  /* clickable things */
+  .click{ cursor:pointer; }
+  .click:hover{ filter:brightness(1.06) drop-shadow(0 0 4px rgba(0,0,0,.25)); }
+
+  .true-glow{ filter:drop-shadow(0 0 6px rgba(52,168,83,.9)); }
+
+  /* ---------- boxes ---------- */
+  .infobox{
+    position:absolute; background:#fff; border:1.6px solid #dde3e8; border-radius:14px;
+    box-shadow:0 2px 10px rgba(20,40,60,.06); padding:11px 14px; pointer-events:none;
+    font-size:11.5px; line-height:1.45; color:#2c3a46;
+  }
+  .infobox h4{ margin:0 0 6px; font-size:12px; letter-spacing:.4px; color:#44525e; }
+  .infobox .eqm{ font-family:"Georgia", serif; font-size:15px; color:#0b3d5c; margin:2px 0; }
+  .infobox .mono{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10.2px; color:#0b3d5c; }
+
+  /* detail panel */
+  #panel{
+    position:absolute; background:#fff; border:1.6px solid #d8e0e6; border-radius:14px;
+    box-shadow:0 2px 12px rgba(20,40,60,.10); padding:14px 16px;
+    font-size:11.8px; line-height:1.5; color:#2c3a46;
+    user-select:text; -webkit-user-select:text;
+  }
+  #panel h3{ margin:0 0 6px; font-size:13px; font-weight:800; }
+  #panel .step{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10.5px; background:#f1f4f7; border-radius:6px; padding:4px 8px; margin:5px 0; display:inline-block; color:#0b3d5c; }
+  #panel .res{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px; font-weight:700; color:#b45309; }
+  #panel .hint{ color:#7d8b97; font-size:10.8px; }
+
+  /* ---------- tooltip ---------- */
+  #tip{
+    position:fixed; z-index:100; max-width:340px; display:none;
+    background:#fff; border:1px solid #d8e0e6; border-radius:10px;
+    box-shadow:0 6px 24px rgba(20,40,60,.18);
+    padding:9px 12px; font-size:11.5px; line-height:1.45; color:#2c3a46; pointer-events:none;
+  }
+  #tip b{ color:#0b3d5c; }
+  #tip .mono{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10.5px; color:#0b3d5c; }
+
+  #toolbar{
+    position:fixed; right:16px; bottom:16px; z-index:80; display:flex; gap:6px;
+    background:#fff; border:1px solid #d8e0e6; border-radius:10px; padding:5px;
+    box-shadow:0 4px 14px rgba(20,40,60,.14);
+  }
+  #toolbar button{
+    width:32px; height:32px; border:1px solid #d8e0e6; border-radius:8px; background:#f7f9fb;
+    font-size:15px; font-weight:800; color:#33414d; cursor:pointer;
+  }
+  #toolbar button:hover{ background:#eef2f5; }
+  #hint{
+    position:fixed; left:16px; bottom:18px; z-index:80; font-size:11px; color:#7d8b97;
+    background:rgba(255,255,255,.85); padding:5px 10px; border-radius:999px; border:1px solid #e2e7ec;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MLP — the network, drawn concretely
+    <span class="src">one example walked through: context [·, e, m] → predict “m” (from “Building the model” · Building of MLP.md)</span>
+  </h1>
+  <div class="chips">
+    <span class="chip">27×2 embedding C</span>
+    <span class="chip">6 → 100 hidden (tanh)</span>
+    <span class="chip">100 → 27 logits</span>
+    <span class="chip">softmax → NLL loss</span>
+  </div>
+</header>
+
+<div id="viewport">
+  <div id="world">
+    <svg id="svg" width="2700" height="1250" style="position:absolute;top:0;left:0;"></svg>
+
+    <!-- info boxes -->
+    <div class="infobox" style="left:40px;top:40px;width:640px;height:96px;">
+      <h4>Concrete example (from the note)</h4>
+      <div class="eqm">context <b>[·, e, m]</b> → indices <b>[0, 5, 13]</b> → predict next char <b>“m”</b> (index 13)</div>
+      <div class="mono">from “emma”:&nbsp; [., e, m] → m &nbsp;·&nbsp; Y = 13 &nbsp;·&nbsp; every number below is actually computed by the JS forward pass</div>
+    </div>
+    <div class="infobox" style="left:700px;top:40px;width:700px;height:96px;">
+      <h4>Whole network, one formula (W = 0 in our version)</h4>
+      <div class="eqm">y = b + U·tanh(d + H·x) &nbsp;=&nbsp; b2 + W2·tanh(b1 + W1·emb_cat)</div>
+      <div class="mono">x = emb_cat (6 numbers) · H = W1 (6×100) · d = b1 (100) · U = W2 (100×27) · b = b2 (27)</div>
+    </div>
+
+    <div id="panel" style="left:2380px;top:40px;width:300px;height:980px;"></div>
+
+    <!-- legend -->
+    <div class="infobox" style="left:40px;top:1080px;width:1180px;height:130px;">
+      <h4>Legend</h4>
+      <div class="mono" style="margin:2px 0;">
+        <span style="color:#1a73e8;">━━</span> connection with positive weight &nbsp;&nbsp;
+        <span style="color:#d93025;">━━</span> connection with negative weight &nbsp;·&nbsp; opacity of a line ≈ |weight|
+      </div>
+      <div class="mono" style="margin:2px 0;">
+        <span style="color:#34a853;">●</span> input &nbsp;&nbsp;
+        <span style="color:#f28c28;">●</span> hidden neuron (tanh) &nbsp;&nbsp;
+        <span style="color:#9334e6;">●</span> output neuron (logit) &nbsp;&nbsp;
+        <span style="color:#4285f4;">■</span> embedding / tensor cell &nbsp;&nbsp;
+        <span style="color:#34a853;">■</span> true-answer path (the char “m” & the loss)
+      </div>
+      <div class="mono" style="margin-top:4px;color:#7d8b97;">values are a random init (seed 42, like torch.randn) — hover any neuron to see its weights &amp; arithmetic, click to pin it in the panel on the right.</div>
+    </div>
+  </div>
+</div>
+
+<div id="toolbar">
+  <button id="btnMinus" title="zoom out">−</button>
+  <button id="btnPlus" title="zoom in">+</button>
+  <button id="btnFit" title="fit to screen">⤢</button>
+</div>
+<div id="hint">scroll to zoom · drag to pan · hover neurons/rows for details · click to pin</div>
+<div id="tip"></div>
+
+<script>
+"use strict";
+/* ================================================================
+   1. Seeded parameters — exactly like the note:
+      C = randn((27,2)); W1 = randn((6,100)); b1 = randn(100)
+      W2 = randn((100,27)); b2 = randn(27)   (seed 42, deterministic)
+   ================================================================ */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function randn(rng){ let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+const rng = mulberry32(42);
+const V=27, M=2, HID=100, B=3;
+const C  = Array.from({length:V}, () => [randn(rng), randn(rng)]);
+const W1 = Array.from({length:6}, () => Array.from({length:HID}, () => randn(rng)));
+const b1 = Array.from({length:HID}, () => randn(rng));
+const W2 = Array.from({length:HID}, () => Array.from({length:V}, () => randn(rng)));
+const b2 = Array.from({length:V}, () => randn(rng));
+
+const ch = i => i===0 ? "·" : String.fromCharCode(96+i);   // index 0 = '.', 1..26 = 'a'..'z'
+
+/* the concrete example: context [., e, m] -> 'm' (from "emma" in the note) */
+const ctx = [0, 5, 13];
+const label = 13;
+
+/* ================================================================
+   2. Forward pass — every number shown on the graph comes from here
+   ================================================================ */
+const emb    = ctx.map(i => C[i]);                    // [3][2]
+const embCat = emb.flat();                            // [6]
+const h      = Array.from({length:HID}, (_,j) => {    // [100]
+  let s = b1[j];
+  for (let i=0;i<6;i++) s += embCat[i]*W1[i][j];
+  return Math.tanh(s);
+});
+const logits = Array.from({length:V}, (_,k) => {      // [27]
+  let s = b2[k];
+  for (let j=0;j<HID;j++) s += h[j]*W2[j][k];
+  return s;
+});
+const counts = logits.map(Math.exp);                  // [27]
+const sumCounts = counts.reduce((a,b)=>a+b, 0);
+const probs  = counts.map(c => c/sumCounts);          // [27], rows sum to 1
+const loss   = -Math.log(probs[label]);               // scalar
+
+const f2 = x => (x<0 ? "−" : "") + Math.abs(x).toFixed(2);
+const f3 = x => (x<0 ? "−" : "") + Math.abs(x).toFixed(3);
+
+/* ================================================================
+   3. SVG rendering helpers
+   ================================================================ */
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg");
+const S = (tag, a, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  (parent||svg).appendChild(e);
+  return e;
+};
+const txt = (x,y,s,a,parent) => { const e = S("text", Object.assign({x,y,"text-anchor":"middle"}, a||{}), parent); e.appendChild(document.createTextNode(s)); return e; };
+const rect = (x,y,w,h,a,parent) => S("rect", Object.assign({x,y,width:w,height:h,rx:4}, a||{}), parent);
+const circ = (x,y,r,a,parent) => S("circle", Object.assign({cx:x,cy:y,r}, a||{}), parent);
+const line = (x1,y1,x2,y2,a,parent) => S("line", Object.assign({x1,y1,x2,y2}, a||{}), parent);
+
+// arrow marker
+const defs = S("defs");
+const mk = S("marker", {id:"arr", viewBox:"0 0 10 10", refX:"9", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"});
+S("path", {d:"M 0 0 L 10 5 L 0 10 z", fill:"#90a4ae"}, mk);
+defs.appendChild(mk);
+
+const arrow = (x1,y1,x2,y2) => line(x1,y1,x2,y2, {stroke:"#90a4ae","stroke-width":1.6, "marker-end":"url(#arr)"});
+
+/* ================================================================
+   4. Layout coordinates
+   ================================================================ */
+// C table geometry
+const TAB_X = 230, TAB_Y0 = 180, ROWH = 30;
+const rowCenter = r => TAB_Y0 + r*ROWH + ROWH/2;   // row 0 -> 195, row 5 -> 345, row 13 -> 585
+
+// context char boxes (aligned with queried rows 0, 5, 13)
+const charY = [rowCenter(0), rowCenter(5), rowCenter(13)];   // 195, 345, 585
+
+// embedding bars (right of table)
+const EMB_X = 540, EMB_W = 150;
+
+// concat bar
+const CONCAT_X = 760, CONCAT_W = 170, CELLH = 55, CELLGAP = 6;
+const concatY0 = 270;
+const concatCellY = i => concatY0 + i*(CELLH+CELLGAP);       // 270,331,392,453,514,575
+const concatCellC = i => concatCellY(i) + CELLH/2;
+
+// input dots
+const IN_X = 970;
+// hidden neurons
+const HID_X = 1180, HN = 8, HID_Y0 = 260, HID_PITCH = 54;
+const hidY = j => HID_Y0 + j*HID_PITCH;                      // 260..638
+// hidden dots feeding output
+const HOUT_X = 1380;
+// output neurons (6 visible of 27; show indices incl. the true one, 13)
+const OUT_X = 1580, ON = 6;
+const outIdx = [0, 5, 9, 13, 20, 26];
+const outY = k => 250 + k*84;                                // 250..670
+// softmax columns (same y as outputs)
+const SM_LOGIT_X = 1690, SM_COUNT_X = 1810, SM_PROB_X = 1910, SM_PROB_MAXW = 240;
+// loss chain
+const LOSS_X = 2110;
+
+/* ================================================================
+   5. Layer captions (step numbers from the note)
+   ================================================================ */
+txt(110, 150, "context (Step 1)", {class:"cap"});
+txt(TAB_X+115, 158, "C — embedding table (Step 2)  “C[X] plucks a row”", {class:"cap"});
+txt(EMB_X+EMB_W/2, 158, "emb = C[X]  3 vectors of 2", {class:"cap"});
+txt(CONCAT_X+CONCAT_W/2, 246, "concat / view(-1, 6)  (Step 3)", {class:"cap"});
+txt(IN_X, 246, "emb_cat", {class:"cap"});
+txt(HID_X, 160, "hidden layer  h = tanh(emb_cat @ W1 + b1)", {class:"cap"});
+txt(HID_X, 178, "100 neurons — 8 drawn", {class:"cap"});
+txt(HID_X, 712, "⋯  ⋯  92 more hidden neurons", {class:"tiny"});
+txt(HID_X, 742, "W1 (6×100) · b1 (100) — learnable", {class:"tiny"});
+txt(OUT_X, 160, "output layer  logits = h @ W2 + b2", {class:"cap"});
+txt(OUT_X, 178, "27 neurons — 6 drawn", {class:"cap"});
+txt(OUT_X, 712, "⋯  ⋯  21 more output neurons", {class:"tiny"});
+txt(OUT_X, 742, "W2 (100×27) · b2 (27) — learnable", {class:"tiny"});
+txt(SM_LOGIT_X+120, 160, "softmax → probabilities (Step 4)", {class:"cap"});
+txt(SM_LOGIT_X+120, 178, "count = e^logit · prob = count ÷ Σ count", {class:"cap"});
+txt(LOSS_X+110, 730, "loss (Step 5)  −ln P(true char)", {class:"cap"});
+
+/* ================================================================
+   6. Context char boxes + query arrows into C
+   ================================================================ */
+ctx.forEach((idx, p) => {
+  const y = charY[p];
+  const g = S("g", {class:"click"});
+  rect(60, y-42, 110, 84, {fill:"#eef9f1", stroke:"#34a853", "stroke-width":2}, g);
+  txt(115, y-8, "“" + ch(idx) + "”", {class:"valbig", fill:"#1e7e34"}, g);
+  txt(115, y+12, "index " + idx, {class:"tiny", fill:"#1e7e34"}, g);
+  // query arrow  char box -> row of C
+  arrow(170, y, TAB_X, y);
+  // label on the arrow
+  const lg = S("g");
+  const lw = 7*5.8+10;
+  S("rect", {x:200-lw/2, y:y-8, width:lw, height:16, rx:8, fill:"#fff", stroke:"#cfd8dc"}, lg);
+  txt(200, y+3, "C[" + idx + "]", {class:"tiny", "font-weight":"700"}, lg);
+  g.addEventListener("mouseenter", () => setTip("Context char", "“"+ch(idx)+"” = index "+idx+"<br>queries row "+idx+" of the table: <span class='mono'>C["+idx+"] = ("+f2(C[idx][0])+", "+f2(C[idx][1])+")</span><br>same as <span class='mono'>one_hot("+idx+") @ C</span> — a linear layer with no activation."));
+  g.addEventListener("mouseleave", hideTip);
+  g.addEventListener("click", () => setPanel(
+    "<h3>Context char “" + ch(idx) + "” (index " + idx + ")</h3>" +
+    "The " + (p+1) + ordinal(p) + " of the " + B + " context chars.<br>" +
+    "<span class='step'>emb = C[" + idx + "] = ( " + f3(C[idx][0]) + ", " + f3(C[idx][1]) + " )</span><br>" +
+    "Indexing the table <b>plucks out that row</b> — the learned vector for “" + ch(idx) + "”.<br>" +
+    "From the note: <span class='mono'>one_hot(" + idx + ") @ C == C[" + idx + "]</span> — the embedding is just a linear layer with no activation, written in index form for convenience."));
+});
+
+/* ================================================================
+   7. The 27×2 table C with queried rows highlighted
+   ================================================================ */
+for (let r=0; r<V; r++){
+  const y = rowCenter(r);
+  const q = ctx.includes(r);
+  const cls = q ? "hlrow" : null;
+  const g = S("g", {class:"click"});
+  if (cls) g.setAttribute("class", "click "+cls);
+  // index cell
+  rect(TAB_X, y-ROWH/2, 56, ROWH, {fill: q?"#fdf1e3":"#f6f8fa", stroke: q?"#f28c28":"#dde3e8", "stroke-width": q?2:1}, g);
+  txt(TAB_X+28, y+4, r + " " + ch(r), {class:"tiny", "font-weight": q?800:500, fill: q?"#b45309":"#7d8b97"}, g);
+  // value cells
+  [0,1].forEach(c=>{
+    rect(TAB_X+56+c*87, y-ROWH/2, 87, ROWH, {fill: q?"#fdf1e3":"#f6f8fa", stroke: q?"#f28c28":"#dde3e8", "stroke-width": q?2:1}, g);
+    txt(TAB_X+56+c*87+43.5, y+4, f2(C[r][c]), {class:"val", fill: q?"#b45309":"#546e7a"}, g);
+  });
+  g.addEventListener("mouseenter", () => setTip("Row " + r + " = “" + ch(r) + "”", "C[" + r + "] = (" + f2(C[r][0]) + ", " + f2(C[r][1]) + ")" + (q ? "<br><b>queried by this context!</b>" : "")));
+  g.addEventListener("mouseleave", hideTip);
+  g.addEventListener("click", () => setPanel(
+    "<h3>C row " + r + " — “" + ch(r) + "”</h3>" +
+    "<span class='step'>C[" + r + "] = ( " + f3(C[r][0]) + ", " + f3(C[r][1]) + " )</span><br>" +
+    "One learned 2-D vector per character (m=2 so we can visualize). " + (q ? "This row <b>is</b> queried by the context." : "Not queried by the current context.") +
+    "<br>The same table C is <b>shared across all " + B + " positions</b>."));
+}
+
+/* ================================================================
+   8. Embedding vectors (3 bars of 2 cells) + arrows from C
+   ================================================================ */
+ctx.forEach((idx, p) => {
+  const y = charY[p];
+  arrow(TAB_X+230, y, EMB_X, y);                       // table -> emb bar
+  const g = S("g", {class:"click"});
+  rect(EMB_X, y-26, EMB_W, 52, {fill:"#eef4fd", stroke:"#4285f4", "stroke-width":2}, g);
+  txt(EMB_X+EMB_W/2, y-14, "“"+ch(idx)+"”", {class:"tiny", fill:"#1a56c4"}, g);
+  txt(EMB_X+EMB_W/4, y+6, f2(C[idx][0]), {class:"val"}, g);
+  txt(EMB_X+3*EMB_W/4, y+6, f2(C[idx][1]), {class:"val"}, g);
+  g.addEventListener("mouseenter", () => setTip("emb for “" + ch(idx) + "”", "C[" + idx + "] = (" + f2(C[idx][0]) + ", " + f2(C[idx][1]) + ")<br>position " + (p+1) + " of the context."));
+  g.addEventListener("mouseleave", hideTip);
+  g.addEventListener("click", () => setPanel(
+    "<h3>Embedding of “" + ch(idx) + "” (pos " + (p+1) + ")</h3>" +
+    "<span class='step'>emb[" + p + "] = C[" + idx + "] = ( " + f3(C[idx][0]) + ", " + f3(C[idx][1]) + " )</span><br>" +
+    "Still a separate vector per position — the " + B + " vectors are not merged yet."));
+});
+
+/* ================================================================
+   9. Concatenation bar (6 cells) + converging arrows
+   ================================================================ */
+// arrows: each of the 3 embedding bars feeds 2 cells of the concat bar
+for (let i=0; i<3; i++){
+  arrow(EMB_X+EMB_W, charY[i], CONCAT_X, concatCellC(i*2));
+}
+const cg = S("g", {class:"click"});
+rect(CONCAT_X, concatY0-8, CONCAT_W, 6*(CELLH+CELLGAP)-CELLGAP+16, {fill:"#fdf1e3", stroke:"#f28c28", "stroke-width":2, rx:8}, cg);
+for (let i=0;i<6;i++){
+  const y = concatCellY(i);
+  rect(CONCAT_X+8, y, CONCAT_W-16, CELLH, {fill:"#fff", stroke:"#e7d3bb"}, cg);
+  txt(CONCAT_X+CONCAT_W/2, y+CELLH/2+3.5, f2(embCat[i]), {class:"valbig", fill:"#b45309"}, cg);
+}
+txt(CONCAT_X+CONCAT_W/2, concatY0+6*(CELLH+CELLGAP)+14, "emb_cat — 6 numbers = 3 vectors × 2 dims", {class:"tiny"}, cg);
+cg.addEventListener("mouseenter", () => setTip("emb_cat", "The 3 vectors glued into one big input vector: x = ( C(w₋₁), C(w₋₂), C(w₋₃) ).<br>6 numbers: " + embCat.map(f2).join(", ")));
+cg.addEventListener("mouseleave", hideTip);
+cg.addEventListener("click", () => setPanel(
+  "<h3>Concatenation — emb_cat</h3>" +
+  "<span class='step'>emb_cat = emb.view(-1, 6)</span><br>" +
+  "<span class='step'>[N, 3, 2] → [N, 6]</span><br>" +
+  "Flattening the " + B + " context vectors into one input vector x. This is the <b>x</b> of the paper formula.<br>" +
+  "Values: <span class='mono'>[" + embCat.map(f3).join(", ") + "]</span>"));
+
+/* ================================================================
+   10. Input dots (6) → hidden neurons (8 of 100)
+   ================================================================ */
+const IN_N = 6, HID_N = 8;
+const hidDots = [], hidNeurons = [], hidLabels = [], hidWlab = [];
+for (let j=0; j<HID_N; j++){
+  const y = hidY(j);
+  // pre-activation text + tanh result
+  const pre = b1[j] + embCat.reduce((s,x,i)=>s+x*W1[i][j], 0);
+  const la = txt(HID_X, y-24, "tanh(" + f2(pre) + ") = " + f2(h[j]), {class:"tiny", fill:"#b45309"});
+  hidLabels.push(la);
+}
+// incoming connections + per-line weight labels
+const hidIn = Array.from({length:HID_N}, () => []);
+for (let i=0;i<IN_N;i++){
+  const y1 = concatCellC(i);
+  circ(IN_X, y1, 9, {fill:"#34a853", stroke:"#fff", "stroke-width":2, class:"click"});
+  for (let j=0;j<HID_N;j++){
+    const y2 = hidY(j);
+    const w = W1[i][j];
+    const ln = line(IN_X+10, y1, HID_X-20, y2, {class:"conn "+(w>=0?"plus":"minus"), "stroke-width":1.5});
+    const g = S("g", {class:"wlab"});
+    const mx=(IN_X+10+HID_X-20)/2, my=(y1+y2)/2;
+    const str = "w·" + f2(w);
+    const tw = str.length*4.7+8;
+    S("rect", {x:mx-tw/2, y:my-7, width:tw, height:13, rx:6.5, fill:"#fff", stroke:"#cfd8dc"}, g);
+    txt(mx, my+3, str, {}, g);
+    hidIn[j].push({ln, lab:g});
+    // hover/click on input dots
+    ln.addEventListener("mouseenter", () => setTip("connection", "x" + i + " = " + f2(embCat[i]) + "  →  hidden neuron " + j + "<br>weight W1[" + i + "][" + j + "] = " + f3(w)));
+    ln.addEventListener("mouseleave", hideTip);
+  }
+}
+for (let i=0;i<IN_N;i++){
+  const y = concatCellC(i);
+  hidDots.push({x:IN_X, y, v:embCat[i]});
+}
+// hidden neurons
+for (let j=0;j<HID_N;j++){
+  const y = hidY(j);
+  const n = circ(HID_X, y, 15, {fill:"#f28c28", stroke:"#fff", "stroke-width":2.5, class:"click"});
+  txt(HID_X+26, y+3, "h" + j, {class:"tiny", fill:"#b45309"});
+  hidNeurons.push({el:n, j, y});
+  n.addEventListener("mouseenter", () => {
+    setTip("Hidden neuron " + j, "h" + j + " = tanh( Σᵢ emb_cat[i]·W1[i," + j + "] + b1[" + j + "] )<br>= tanh(" + f2(preFor(j)) + ") = <b>" + f2(h[j]) + "</b>");
+    hidIn[j].forEach(o => { o.ln.classList.add("hl"); o.lab.classList.add("on"); });
+  });
+  n.addEventListener("mouseleave", () => {
+    hideTip();
+    hidIn[j].forEach(o => { o.ln.classList.remove("hl"); o.lab.classList.remove("on"); });
+  });
+  n.addEventListener("click", () => setPanel(hiddenPanel(j)));
+}
+function preFor(j){
+  let s = b1[j]; for (let i=0;i<6;i++) s += embCat[i]*W1[i][j];
+  return s;
+}
+function hiddenPanel(j){
+  const terms = [];
+  for (let i=0;i<6;i++) terms.push(f3(embCat[i]) + "·" + f3(W1[i][j]));
+  const pre = preFor(j);
+  return "<h3>Hidden neuron " + j + " / 100</h3>" +
+    "<span class='step'>h" + j + " = tanh( Σᵢ emb_cat[i]·W1[i," + j + "] + b1[" + j + "] )</span><br>" +
+    "= tanh( " + terms.join(" + ") + " + " + f3(b1[j]) + " )<br>" +
+    "= tanh( " + f3(pre) + " )<br>" +
+    "<span class='res'>= " + f3(h[j]) + "</span><br>" +
+    "<span class='hint'>tanh squashes to (−1, 1) — the non-linearity that makes the network non-linear.</span>";
+}
+
+/* ================================================================
+   11. Hidden dots (8) → output neurons (6 of 27)
+   ================================================================ */
+const outIn = Array.from({length:ON}, () => []);
+for (let j=0;j<HID_N;j++){
+  const y = hidY(j);
+  circ(HOUT_X, y, 9, {fill:"#f28c28", stroke:"#fff", "stroke-width":2, class:"click"});
+  txt(HOUT_X+16, y+3, "h" + j, {class:"tiny"}, );
+}
+for (let j=0;j<HID_N;j++){
+  const y1 = hidY(j);
+  for (let k=0;k<ON;k++){
+    const y2 = outY(k);
+    const w = W2[j][outIdx[k]];
+    const ln = line(HOUT_X+12, y1, OUT_X-22, y2, {class:"conn "+(w>=0?"plus":"minus"), "stroke-width":1.5});
+    const g = S("g", {class:"wlab"});
+    const mx=(HOUT_X+12+OUT_X-22)/2, my=(y1+y2)/2;
+    const str = "w·" + f2(w);
+    const tw = str.length*4.7+8;
+    S("rect", {x:mx-tw/2, y:my-7, width:tw, height:13, rx:6.5, fill:"#fff", stroke:"#cfd8dc"}, g);
+    txt(mx, my+3, str, {}, g);
+    outIn[k].push({ln, lab:g});
+    ln.addEventListener("mouseenter", () => setTip("connection", "h" + j + " = " + f2(h[j]) + "  →  output “" + ch(outIdx[k]) + "”<br>weight W2[" + j + "][" + outIdx[k] + "] = " + f3(w)));
+    ln.addEventListener("mouseleave", hideTip);
+  }
+}
+// output neurons
+for (let k=0;k<ON;k++){
+  const idx = outIdx[k], y = outY(k);
+  const isTrue = idx === label;
+  const lg = S("g", {class:"click" + (isTrue ? " true-glow" : "")});
+  circ(OUT_X, y, 15, {fill:"#9334e6", stroke:"#fff", "stroke-width":2.5}, lg);
+  txt(OUT_X+24, y+3, "“" + ch(idx) + "”" + (isTrue ? "  ★ true char" : ""), {class:"tiny", fill: isTrue?"#1e7e34":"#6b1f9e", "font-weight": isTrue?800:500}, lg);
+  txt(OUT_X, y-24, "logit " + f2(logits[idx]), {class:"tiny", fill:"#6b1f9e"}, lg);
+  lg.addEventListener("mouseenter", () => {
+    setTip("Output “" + ch(idx) + "” (index " + idx + ")", "logit = Σⱼ h[j]·W2[j," + idx + "] + b2[" + idx + "] = <b>" + f2(logits[idx]) + "</b><br>count = e^logit = " + f2(counts[idx]) + " · prob = " + (100*probs[idx]).toFixed(1) + "%" + (isTrue ? "<br><b>this is the true next char — drives the loss!</b>" : ""));
+    outIn[k].forEach(o => { o.ln.classList.add("hl"); o.lab.classList.add("on"); });
+  });
+  lg.addEventListener("mouseleave", () => {
+    hideTip();
+    outIn[k].forEach(o => { o.ln.classList.remove("hl"); o.lab.classList.remove("on"); });
+  });
+  lg.addEventListener("click", () => setPanel(outputPanel(k)));
+}
+function outputPanel(k){
+  const idx = outIdx[k], isTrue = idx === label;
+  const terms = [];
+  for (let j=0;j<4;j++) terms.push(f3(h[j]) + "·" + f3(W2[j][idx]));
+  const pre = logits[idx];
+  return "<h3>Output neuron “" + ch(idx) + "” (index " + idx + ")" + (isTrue ? " ★" : "") + "</h3>" +
+    (isTrue ? "<span class='hint'>The true next char — the one the loss cares about.</span><br>" : "") +
+    "<span class='step'>logit = Σⱼ h[j]·W2[j," + idx + "] + b2[" + idx + "]&nbsp;&nbsp;(100 terms)</span><br>" +
+    "= " + terms.join(" + ") + " + … + " + f3(b2[idx]) + "<br>" +
+    "<span class='res'>logit = " + f3(pre) + "</span><br>" +
+    "<span class='step'>count = e^" + f3(pre) + " = " + f3(counts[idx]) + "</span><br>" +
+    "<span class='step'>prob = count ÷ Σᵢe^logitᵢ = " + f3(counts[idx]) + " ÷ " + f3(sumCounts) + "</span><br>" +
+    "<span class='res'>P(“" + ch(idx) + "” | context) = " + (100*probs[idx]).toFixed(2) + "%</span>";
+}
+
+/* ================================================================
+   12. Softmax columns — logit → exp(count) → normalize (prob bar)
+   ================================================================ */
+txt(SM_LOGIT_X, 210, "logit", {class:"op-lab"});
+txt(SM_COUNT_X, 210, "count = e^logit", {class:"op-lab"});
+txt(SM_PROB_X+SM_PROB_MAXW/2, 210, "prob = count ÷ Σ", {class:"op-lab"});
+for (let k=0;k<ON;k++){
+  const idx = outIdx[k], y = outY(k);
+  const isTrue = idx === label;
+  // logit value
+  txt(SM_LOGIT_X, y, f2(logits[idx]), {class:"valbig", fill: isTrue?"#1e7e34":"#0b3d5c"});
+  // exp arrow + operation
+  txt((SM_LOGIT_X+SM_COUNT_X)/2, y-10, "exp", {class:"tiny", fill:"#7d8b97"});
+  arrow(SM_LOGIT_X+24, y, SM_COUNT_X-16, y);
+  // count value
+  txt(SM_COUNT_X, y, f2(counts[idx]), {class:"val", fill:"#546e7a"});
+  // divide arrow + operation
+  txt((SM_COUNT_X+SM_PROB_X)/2, y-10, "÷Σ = " + f2(sumCounts), {class:"tiny", fill:"#7d8b97"});
+  arrow(SM_COUNT_X+24, y, SM_PROB_X-6, y);
+  // probability bar
+  const bw = Math.max(6, probs[idx]*SM_PROB_MAXW);
+  const g = S("g", {class:"click"});
+  rect(SM_PROB_X, y-9, SM_PROB_MAXW, 18, {fill:"#eef1f5", stroke:"#dde3e8"}, g);
+  rect(SM_PROB_X, y-9, bw, 18, {fill: isTrue?"#34a853":"#9334e6", rx:4}, g);
+  txt(SM_PROB_X+bw+46, y+3, (100*probs[idx]).toFixed(1) + "%", {class:"tiny", fill: isTrue?"#1e7e34":"#6b1f9e", "font-weight":700}, g);
+  g.addEventListener("mouseenter", () => setTip("P(“" + ch(idx) + "” | context)", f3(probs[idx]) + "  =  " + f3(counts[idx]) + " ÷ " + f3(sumCounts) + "  =  e^" + f3(logits[idx]) + " ÷ Σ e^logits"));
+  g.addEventListener("mouseleave", hideTip);
+  g.addEventListener("click", () => setPanel(
+    "<h3>Softmax — output “" + ch(idx) + "”</h3>" +
+    "<span class='step'>count = e^" + f3(logits[idx]) + " = " + f3(counts[idx]) + "</span><br>" +
+    "<span class='step'>prob = " + f3(counts[idx]) + " ÷ " + f3(sumCounts) + " = " + f3(probs[idx]) + "</span><br>" +
+    (isTrue ? "<span class='res'>P(“m”|context) = " + (100*probs[idx]).toFixed(2) + "%  ← this is what the loss uses</span>" : "Not the true char.")));
+}
+
+/* ================================================================
+   13. The loss chain — probs[13] → −ln → mean → loss
+   ================================================================ */
+// green path from the true-char prob bar (row 3, y=502) around to the loss chain
+const trueBarY = outY(outIdx.indexOf(label));
+S("path", {d:"M " + (SM_PROB_X+SM_PROB_MAXW+56) + " " + trueBarY + " H 2300 V 772 H 2260",
+           fill:"none", stroke:"#34a853", "stroke-width":2, "stroke-dasharray":"5 4",
+           "marker-end":"url(#arr)"});
+txt(2253, 492, "the one that matters", {class:"tiny", fill:"#1e7e34"});
+
+// probs[true] box
+const pb = S("g", {class:"click true-glow"});
+rect(LOSS_X-150, 760, 300, 56, {fill:"#eef9f1", stroke:"#34a853", "stroke-width":2}, pb);
+txt(LOSS_X, 778, "probs[true] = probs[13] (“m”) = " + f2(probs[label]), {class:"valbig", fill:"#1e7e34"}, pb);
+txt(LOSS_X, 798, "prob the model gave the actual next char", {class:"tiny", fill:"#1e7e34"}, pb);
+pb.addEventListener("mouseenter", () => setTip("The true probability", "Y = " + label + " (the real next char “m”).<br>prob = " + f3(probs[label]) + " — ideally as close to 1 as possible."));
+pb.addEventListener("mouseleave", hideTip);
+pb.addEventListener("click", () => setPanel(
+  "<h3>Step 5 — pick the true probability</h3>" +
+  "<span class='step'>probs[torch.arange(N), Y]  →  probs[0, 13] = " + f3(probs[label]) + "</span><br>" +
+  "For each example, look up the probability the model assigned to the <b>actual</b> next character (here “m”, index 13)."));
+
+// −ln op
+const lg = S("g", {class:"click"});
+rect(LOSS_X-70, 840, 140, 44, {fill:"#fdf1e3", stroke:"#f28c28", "stroke-width":2}, lg);
+txt(LOSS_X, 866, "−ln (per example)", {class:"op-lab"}, lg);
+arrow(LOSS_X, 816, LOSS_X, 840);
+lg.addEventListener("mouseenter", () => setTip("−ln", "−ln(" + f3(probs[label]) + ") = " + f3(loss) + "<br>maximizing likelihood ≡ minimizing −log likelihood"));
+lg.addEventListener("mouseleave", hideTip);
+lg.addEventListener("click", () => setPanel(
+  "<h3>Negative log</h3>" +
+  "<span class='step'>− ln( " + f3(probs[label]) + " ) = " + f3(loss) + "</span><br>" +
+  "A tiny probability → huge loss. This is the NLL per example."));
+
+// value + mean op
+txt(LOSS_X+130, 866, "= " + f2(loss), {class:"valbig", fill:"#b45309"});
+const mg = S("g", {class:"click"});
+rect(LOSS_X-70, 910, 140, 44, {fill:"#fdf1e3", stroke:"#f28c28", "stroke-width":2}, mg);
+txt(LOSS_X, 936, "mean (batch = 1)", {class:"op-lab"}, mg);
+arrow(LOSS_X, 884, LOSS_X, 910);
+mg.addEventListener("mouseenter", () => setTip("mean", "Average over the batch — here we show a single example, so the mean is the value itself."));
+mg.addEventListener("mouseleave", hideTip);
+mg.addEventListener("click", () => setPanel(
+  "<h3>Mean over examples</h3>" +
+  "<span class='step'>loss = (1/T)·Σₜ −ln P(wₜ | context) = −ln(" + f3(probs[label]) + ") = " + f3(loss) + "</span><br>" +
+  "The objective the paper maximizes (as mean log-likelihood). With one example shown, mean = the value itself."));
+
+// final loss
+const fl = S("g", {class:"click true-glow"});
+rect(LOSS_X-100, 980, 200, 58, {fill:"#f7eefb", stroke:"#9334e6", "stroke-width":2.5}, fl);
+txt(LOSS_X, 1006, "loss = " + f2(loss), {class:"valbig", fill:"#6b1f9e"}, fl);
+txt(LOSS_X, 1024, "scalar to minimize", {class:"tiny", fill:"#6b1f9e"}, fl);
+arrow(LOSS_X, 954, LOSS_X, 980);
+fl.addEventListener("mouseenter", () => setTip("loss", "loss = " + f3(loss) + "<br>equals F.cross_entropy(logits, Y) — same number, fused & stable."));
+fl.addEventListener("mouseleave", hideTip);
+fl.addEventListener("click", () => setPanel(
+  "<h3>The loss</h3>" +
+  "<span class='res'>loss = " + f3(loss) + "</span><br>" +
+  "<span class='step'>F.cross_entropy(logits, Y) computes the exact same number</span><br>" +
+  "fused softmax+log+index kernel, numerically stable (subtracts max logit), cleaner backward pass.<br>" +
+  "Backpropagation will then walk this graph <b>in reverse</b> and update C, W1, b1, W2, b2."));
+
+/* ================================================================
+   14. Detail panel + tooltip
+   ================================================================ */
+const panel = document.getElementById("panel");
+function setPanel(html){ panel.innerHTML = html; }
+function ordinal(p){ return p===0?"st":p===1?"nd":p===2?"rd":"th"; }
+const tip = document.getElementById("tip");
+function setTip(title, body){
+  tip.innerHTML = "<b>" + title + "</b><br>" + body;
+  tip.style.display = "block";
+}
+function hideTip(){ tip.style.display = "none"; }
+document.addEventListener("mousemove", e => {
+  if (tip.style.display === "block"){
+    const r = tip.getBoundingClientRect();
+    let px = e.clientX + 16, py = e.clientY + 16;
+    if (px + r.width > innerWidth - 8) px = e.clientX - r.width - 16;
+    if (py + r.height > innerHeight - 8) py = e.clientY - r.height - 16;
+    tip.style.left = px + "px"; tip.style.top = py + "px";
+  }
+});
+
+/* default panel: the true-char output (ties the whole graph together) */
+setPanel(outputPanel(outIdx.indexOf(label)));
+
+/* ================================================================
+   15. Pan & zoom
+   ================================================================ */
+const viewport = document.getElementById("viewport");
+const world = document.getElementById("world");
+const W = 2700, H = 1250;
+let k = 1, tx = 0, ty = 0;
+function apply(){ world.style.transform = "translate(" + tx + "px, " + ty + "px) scale(" + k + ")"; }
+function fit(){
+  const r = viewport.getBoundingClientRect();
+  k = Math.min(r.width/W, r.height/H) * 0.94;
+  tx = (r.width - W*k)/2; ty = (r.height - H*k)/2;
+  apply();
+}
+function zoomAt(mx, my, f){
+  const k2 = Math.min(4, Math.max(0.2, k*f));
+  tx = mx - (mx - tx)*(k2/k); ty = my - (my - ty)*(k2/k);
+  k = k2; apply();
+}
+viewport.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = viewport.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY*0.0015));
+}, {passive:false});
+let dragging=false, sx=0, sy=0, stx=0, sty=0;
+viewport.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  dragging=true; sx=e.clientX; sy=e.clientY; stx=tx; sty=ty;
+  viewport.classList.add("dragging"); viewport.setPointerCapture(e.pointerId);
+});
+viewport.addEventListener("pointermove", e => {
+  if(!dragging) return;
+  tx = stx + (e.clientX - sx); ty = sty + (e.clientY - sy);
+  apply();
+});
+viewport.addEventListener("pointerup", () => { dragging=false; viewport.classList.remove("dragging"); });
+document.getElementById("btnPlus").addEventListener("click", () => { const r=viewport.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 1.3); });
+document.getElementById("btnMinus").addEventListener("click", () => { const r=viewport.getBoundingClientRect(); zoomAt(r.width/2, r.height/2, 1/1.3); });
+document.getElementById("btnFit").addEventListener("click", fit);
+viewport.addEventListener("dblclick", fit);
+window.addEventListener("resize", fit);
+fit();
+</script>
+</body>
+</html>
