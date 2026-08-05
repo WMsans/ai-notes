@@ -8,7 +8,10 @@ We keep the exact [[Building of MLP|MLP]] from before (11,000 parameters; 200,00
 
 # Problem 1: the network is confidently wrong at initialization
 
-Look at the loss curve of the original network: it has a **hockey stick** shape — at iteration 0 the loss is a whopping **27**, and only then it rapidly falls. We should expect something much lower.
+Look at the loss curve of the original network: it has a **hockey stick** shape — at iteration 0 the loss is a whopping **27**, and only then it rapidly falls. 
+![[Pasted image 20260804085405.png]]
+
+We expect a much lower starting value. 
 
 *Why?* At initialization the weights are random, so there's no reason to prefer any character over the others. We'd expect a **uniform distribution** over the 27 possible next characters, i.e. probability $\frac{1}{27}$ each, giving the expected [[Likelihood|negative log-likelihood]]:
 
