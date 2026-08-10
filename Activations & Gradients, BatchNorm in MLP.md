@@ -35,25 +35,47 @@ b2 = torch.randn(vocab_size) * 0                  # exactly zero
 - `W2` is scaled down but **not zero**: a small random matrix adds a little entropy and provides **symmetry breaking** (with exactly zero weights, every neuron would get identical gradients and the network could never differentiate them).
 - The logits *don't strictly have to be zero* — softmax is invariant to adding a constant to all logits — but zero is the symmetric choice.
 
-The initial loss is now ≈ 3.3 (what we expect), the hockey stick disappears, and — because training no longer wastes thousands of steps just squashing down the weights — the validation loss improves: **2.17 → 2.13**.
+The initial loss is now ≈ 3.3 (what we expect), the hockey stick disappears. 
+
+![[Pasted image 20260810093532.png|401]]
 
 # Problem 2: tanh saturation — the "dead neuron" problem
 
-The logits are fine now, but let's look at the *hidden layer*. Plotting the histogram of `h = tanh(hpreact)`:
+>[!RECALL]
+>The hidden layer (h) is expressed through $$hpreact = embcat \cdot W1 + b1$$, where the `embcat` is embedded input (context). 
+>```python
+>emb = C[xb] // Getting embeddings from C, for all the input of xb. 
+>embcat = emb.view(emb.shape[0], -1) // Flatten the emb out. 
+>```
+>To activate the hidden layer, we apply activation function `tanh` to each of the elements in `hpreact`. 
+>```python
+>h = tanh(hpreact)
+>```
 
-![[Pasted image 20260719115605.png|476]]
+Let's look at the *hidden layer*. Plotting the histogram of activated `h = tanh(hpreact)`:
 
-Almost all values sit at **+1 and −1** — the tanh is *completely saturated*. The reason: the pre-activations `hpreact` are way too broad (roughly −5 to 15), so tanh squashes everything into its flat tails.
+![[Pasted image 20260810100356.png|358]]
 
-*Why is that bad?* Recall from [[Building of micrograd]] how the gradient flows through tanh — the local gradient is:
+Almost all values sit at **+1 and −1** — the tanh is *completely saturated*. We can see the reason in the graph of `hpreact`: 
+
+![[Pasted image 20260810140954.png|364]]
+
+The pre-activations `hpreact` are way **too broad** (roughly −5 to 15), so tanh squashes everything into its flat tails. 
+
+*Why is that bad?* Recall from [[Building of micrograd]] how the gradient flows through `tanh` — the local gradient is:
 
 $$\frac{d}{dx}\tanh(x) = 1 - \tanh^2(x) = 1 - t^2$$
 
 If $t \approx \pm 1$, this local gradient is ≈ 0, and by the chain rule the incoming gradient gets **multiplied by ~0**: the gradient is destroyed at that neuron. The further into the flat tail, the more the gradient shrinks. tanh can only ever *decrease* the gradient flowing through it.
 
+![[Pasted image 20260810100940.png|390]]
+
 We can visualize the damage directly: `(h.abs() > 0.99)` is a boolean tensor of shape `[32, 200]` (examples × neurons) — white where a neuron is in the flat tail. If an **entire column** (neuron) is white — i.e. no example ever lands in the active region of that tanh — the neuron's weights get zero gradient forever: it's a **dead neuron**, and it will never learn.
 
+![[Pasted image 20260810101032.png]]
+
 >[!WARNING] Dead neurons are not unique to tanh
+>![[Pasted image 20260810101047.png]]
 > - **Sigmoid** — same squashing shape, same problem.
 > - **ReLU** — has a completely flat region below zero, so a neuron whose pre-activations are always negative is *exactly* dead (gradient is exactly 0, not just tiny). Dead ReLUs can appear at initialization by chance, or during training when a too-large learning rate knocks a neuron off the data manifold — from then on nothing ever activates it again. Karpathy calls it *"permanent brain damage"*.
 > - **Leaky ReLU / ELU** have no flat tails, so they're more forgiving.
@@ -63,11 +85,13 @@ We can visualize the damage directly: `(h.abs() > 0.99)` is a boolean tensor of 
 `hpreact = embcat @ W1 + b1`, so we scale both down:
 
 ```python
-W1 = torch.randn((n_embd * block_size, n_hidden)) * 0.2
-b1 = torch.randn(n_hidden) * 0.01
+W1 = torch.randn((n_embd * block_size, n_hidden)) * 0.2 # Added this * 0.2 to compress hpreact size
+b1 = torch.randn(n_hidden) * 0.01 # Added this * 0.01 to compress hpreact size
 ```
 
-Now the pre-activations are roughly within ±1.5, the histogram of `h` is nicely spread, no saturation. Validation loss: **2.13 → 2.10**.
+Now the pre-activations are roughly within ±1.5, the histogram of `h` is nicely spread, no saturation. 
+
+![[Pasted image 20260810141303.png|308]]
 
 *But this `0.2` is a magic number — I just guessed it from looking at a histogram.* For a 1-layer MLP the optimization is forgiving and the network learned anyway, but for a network with 50 layers, errors like this **stack up** until it barely trains at all. We need a principled way to set these scales.
 
@@ -106,7 +130,14 @@ With Kaiming init we land at the **same 2.10** validation loss — but without a
 
 Paper: *"Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift"*, Ioffe & Szegedy, Google, 2015.
 
-We keep saying *"we want the pre-activations to be roughly unit Gaussian"*... so **why not just normalize them?** That's the (initially crazy-sounding) insight of batchnorm: standardizing a tensor to zero mean and unit variance is a perfectly **differentiable** operation, so we can insert it into the network as a layer.
+We keep saying *"we want the pre-activations to be roughly unit Gaussian"*... so **why not just normalize them?** 
+
+![[Pasted image 20260810143136.png]]
+
+>[!Note]
+>Gaussian Distribution is just *Normal distribution*
+
+That's the (initially crazy-sounding) insight of **batchnorm**: standardizing a tensor to zero mean and unit variance is a perfectly **differentiable** operation, so we can insert it into the network as a layer.
 
 ## The manual implementation
 

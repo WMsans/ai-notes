@@ -95,8 +95,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 222.0040512084961,
-    "collapsed": true
+    "width": 222.0040512084961
   },
   "right": {
     "id": "e3123548f92d1f9d",
@@ -197,7 +196,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 305.06585693359375
+    "width": 235.518310546875
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -212,6 +211,15 @@
   },
   "active": "f407ca9ab773b265",
   "lastOpenFiles": [
+    "Pasted image 20260810143136.png",
+    "Pasted image 20260810141303.png",
+    "Pasted image 20260810140954.png",
+    "Pasted image 20260810101047.png",
+    "Pasted image 20260810101032.png",
+    "Pasted image 20260810100940.png",
+    "Pasted image 20260810100522.png",
+    "Pasted image 20260810100356.png",
+    "Pasted image 20260810093532.png",
     "Pasted image 20260804085405.png",
     "Building of MLP.md",
     "Activations & Gradients, BatchNorm in MLP.md",
@@ -219,20 +227,11 @@
     "Building of micrograd.md",
     "Likelihood.md",
     "Pasted image 20260803102352.png",
-    "Pasted image 20260803102247.png",
-    "Pasted image 20260803100737.png",
     "MLP Computation Graph.html",
-    "Pasted image 20260731225921.png",
-    "Pasted image 20260731225845.png",
     "One-hot encoding.md",
     "Logits.md",
     "Dot product.md",
     "Softmax.md",
-    "Pasted image 20260725121953.png",
-    "Pasted image 20260725103923.png",
-    "Pasted image 20260725103839.png",
-    "Pasted image 20260722121621.png",
-    "Pasted image 20260721183756.png",
     "create a link.md"
   ]
 }
