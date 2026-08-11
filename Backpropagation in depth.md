@@ -1,0 +1,1 @@
+We are taking pytorch's `loss.backward()` for granted in [[Building of MLP]]. Let's implement the backpropagation algorithm by hand. 

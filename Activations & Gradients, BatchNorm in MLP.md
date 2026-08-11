@@ -213,18 +213,40 @@ The standard **motif** in modern networks is *weight layer → normalization →
 
 # Bonus: torch-ifying the code and diagnostic plots
 
-Karpathy wraps the layers into module classes (`Linear`, `BatchNorm1d`, `Tanh`) with the same API as PyTorch, then stacks them into a **6-layer** MLP (46,000 parameters): Linear → Tanh → Linear → Tanh → ... → Linear → Softmax. This lets us *systematically* inspect the network's health:
+Karpathy wraps the layers into module classes (`Linear`, `BatchNorm1d`, `Tanh`) with the same API as PyTorch, then stacks them into a **6-layer** MLP (46,000 parameters): Linear → Tanh → Linear → Tanh → ... → Linear → Softmax. 
+
+![[Pasted image 20260811085937.png|513]]
+
+This lets us *systematically* inspect the network's health:
 
 1. **Forward activation histograms** — at every tanh layer, plot the histogram of `h`, plus the mean, std, and **% saturation** ($|t| > 0.97$, i.e. in the gradient-killing tail). With gain $\tfrac{5}{3}$ the std stabilizes around **0.65** with ~5% saturation (the first layer starts more saturated, ~20%, then everything settles down). Gain too small (1) → activations slowly **shrink to zero** through the layers. Gain too big (3) → everything saturates.
-2. **Backward gradient histograms** — gradients at every layer should have roughly similar magnitude; if they shrink or explode across layers, that's bad (and this is *exactly* why RNNs, which are just very deep unrolled networks, are hard to train — a teaser for the next part).
+![[Pasted image 20260811090550.png|456]]
+	Normal activation histograms.
+![[Pasted image 20260811091715.png|460]]
+	Gain too small. Everything collapsed to zero as the layers go deeper. 
+![[Pasted image 20260811091621.png|455]]
+	Gain too big. Everything saturated as the layers go deeper. 
+
+2. **Backward gradient histograms** — gradients at every layer should have roughly similar magnitude; if they shrink or explode across layers, that's bad (and this is *exactly* why RNNs, which are just very deep unrolled networks, are hard to train).
+![[Pasted image 20260811091058.png|456]]
+	Normal gradient histograms. 
+![[Pasted image 20260811091854.png|461]]
+	Gain too big. The gradient diffuses as the layers go deeper. 
+
 3. **Weight histograms** — mean/std of the parameters themselves.
+![[Pasted image 20260811093330.png|461]]
+	We usually don't look at the weights directly since they don't mean anything to us. We have no way to interpret it. 
+
 4. **Update-to-data ratio** — the real diagnostic:
 
 ```python
 update_to_data = log10( (lr * p.grad).std() / p.data.std() )
 ```
 
-This compares the size of the *update we'll apply* to the size of the *values being updated*. A good heuristic: about **$10^{-3}$** (log scale ≈ −3). Much higher → learning rate too big; much lower (e.g. −4) → training too slow. The **last layer** is typically an outlier (its weights were artificially shrunk by ×0.01 to fix the softmax, so the ratio starts high until it grows into its weights). Forgetting fan-in normalization entirely shows up immediately: saturated activations, scrambled gradients, and ratios like −1 to −1.5.
+![[Pasted image 20260811094432.png|587]]
+	The pink line, layer 11, is the [[Softmax]] layer. 
+
+This compares the size of the *update we'll apply* to the size of the *values being updated*. It is a good reflection of learning rate. A good heuristic: about **$10^{-3}$** (log scale ≈ −3). Much higher → learning rate too big; much lower (e.g. −4) → training too slow. The **last layer**, the [[softmax]] layer, is typically an outlier (its weights were artificially shrunk by ×0.01 to fix the softmax, so the ratio starts high until it grows into its weights). Forgetting fan-in normalization entirely shows up immediately: saturated activations, scrambled gradients, and ratios like −1 to −1.5.
 
 ## With batchnorm, everything becomes robust
 
