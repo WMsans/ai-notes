@@ -50,8 +50,8 @@ However, since `xenc` is [[One-hot encoding|one hot encoded]], most indexes in `
 xenc[row, activated_idx] * W[activated_idx]
 ```
 This is the **activation value** of the *row_th input* (`wx + b`). Through [[Dot product|dot multiplication]], we can process the 5 inputs (rows) in parallel. 
-### Building a layer
-We want 27 neurons instead of just 1 per layer.
+### Building a [[List of Layers#Linear|layer]]
+We want 27 neurons instead of just 1 per [[List of Layers#Linear|layer]].
 ```python
 W = torch.randn((27, 27))
 xenc @ W
@@ -60,12 +60,12 @@ It would give us a tensor of [5, 27], representing *5 inputs* and *27 neurons*.
 ![[Pasted image 20260725121953.png|418]]
 Likewise, each value is the **activation value** of the *row-th input* to the *column-th neuron* . 
 	For instance, `(xenc @ W)[3, 13]` is the activation value of the *13th neuron* to the *3rd input*, according to the formula `wx + b`:  $$w_{13} \cdot x_3 + b$$
-For now, let's treat the layer (`W`) as the neural net, since it can already **take an input** (`xenc`) and **produce an output**. We need to **interpret** the output (`xenc @ W`). 
+For now, let's treat the [[List of Layers#Linear|layer]] (`W`) as the neural net, since it can already **take an input** (`xenc`) and **produce an output**. We need to **interpret** the output (`xenc @ W`). 
 ### Interpreting the output
 
 The output `xenc @ W` — shape `[5, 27]` — gives us raw scores called **[[Logits|logits]]**. In other words, they are log counts. They can be **negative** and **non-integers** instead of like counts, and they don't **add up to one** like probabilities. 
 
-To convert logits into a probability distribution, we use the **[[Softmax|softmax]]** function:
+To convert logits into a probability distribution, we use the **[[List of Layers#Softmax|softmax]]** function:
 ```python
 # Step 1: exponentiate to make everything positive
 counts = logits.exp()

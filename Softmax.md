@@ -1,5 +1,7 @@
 # Softmax
 
+> This is the deep-dive note on the softmax layer. For its entry in the layer reference (what it does and where it goes), see [[List of Layers#Softmax]].
+
 The softmax function converts a vector of real numbers ([[Logits|logits]]) into a probability distribution. Given a vector $z = [z_1, z_2, ..., z_K]$, the softmax is:
 
 $$\text{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}$$

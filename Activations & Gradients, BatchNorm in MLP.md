@@ -17,10 +17,10 @@ We expect a much lower starting value.
 
 $$-\ln\left(\tfrac{1}{27}\right) = \ln(27) \approx 3.29$$
 
-But instead the [[Logits|logits]] coming out of the network take on **extreme values** — say `5` for a wrong character and something tiny for the right one. Softmax then puts nearly all probability on the wrong answer: the network is **confidently wrong**, so it records absurdly high loss.
+But instead the [[Logits|logits]] coming out of the network take on **extreme values** — say `5` for a wrong character and something tiny for the right one. [[List of Layers#Softmax|Softmax]] then puts nearly all probability on the wrong answer: the network is **confidently wrong**, so it records absurdly high loss.
 
 >[!NOTE] Small example
-> With 4 characters and logits all ≈ 0, softmax gives a uniform distribution and the loss is $\ln(4) \approx 1.38$ no matter the label. But if the logits are multiplied by 10, they take on extreme values, the model "guesses" the wrong bucket with confidence, and the loss explodes (possibly even to infinity).
+> With 4 characters and logits all ≈ 0, [[List of Layers#Softmax|softmax]] gives a uniform distribution and the loss is $\ln(4) \approx 1.38$ no matter the label. But if the logits are multiplied by 10, they take on extreme values, the model "guesses" the wrong bucket with confidence, and the loss explodes (possibly even to infinity).
 
 ## The fix: logits should be ≈ 0 at init
 
@@ -33,13 +33,13 @@ b2 = torch.randn(vocab_size) * 0                  # exactly zero
 
 - `b2 = 0` — we don't want a random offset.
 - `W2` is scaled down but **not zero**: a small random matrix adds a little entropy and provides **symmetry breaking** (with exactly zero weights, every neuron would get identical gradients and the network could never differentiate them).
-- The logits *don't strictly have to be zero* — softmax is invariant to adding a constant to all logits — but zero is the symmetric choice.
+- The logits *don't strictly have to be zero* — [[List of Layers#Softmax|softmax]] is invariant to adding a constant to all logits — but zero is the symmetric choice.
 
 The initial loss is now ≈ 3.3 (what we expect), the hockey stick disappears. 
 
 ![[Pasted image 20260810093532.png|401]]
 
-# Problem 2: tanh saturation — the "dead neuron" problem
+# Problem 2: [[List of Layers#Tanh|tanh]] saturation — the "dead neuron" problem
 
 >[!RECALL]
 >The hidden layer (h) is expressed through $$hpreact = embcat \cdot W1 + b1$$, where the `embcat` is embedded input (context). 
@@ -47,7 +47,7 @@ The initial loss is now ≈ 3.3 (what we expect), the hockey stick disappears.
 >emb = C[xb] // Getting embeddings from C, for all the input of xb. 
 >embcat = emb.view(emb.shape[0], -1) // Flatten the emb out. 
 >```
->To activate the hidden layer, we apply activation function `tanh` to each of the elements in `hpreact`. 
+>To activate the hidden layer, we apply activation function [[List of Layers#Tanh|`tanh`]] to each of the elements in `hpreact`. 
 >```python
 >h = tanh(hpreact)
 >```
@@ -56,29 +56,29 @@ Let's look at the *hidden layer*. Plotting the histogram of activated `h = tanh(
 
 ![[Pasted image 20260810100356.png|358]]
 
-Almost all values sit at **+1 and −1** — the tanh is *completely saturated*. We can see the reason in the graph of `hpreact`: 
+Almost all values sit at **+1 and −1** — the [[List of Layers#Tanh|tanh]] is *completely saturated*. We can see the reason in the graph of `hpreact`: 
 
 ![[Pasted image 20260810140954.png|364]]
 
-The pre-activations `hpreact` are way **too broad** (roughly −5 to 15), so tanh squashes everything into its flat tails. 
+The pre-activations `hpreact` are way **too broad** (roughly −5 to 15), so [[List of Layers#Tanh|tanh]] squashes everything into its flat tails. 
 
-*Why is that bad?* Recall from [[Building of micrograd]] how the gradient flows through `tanh` — the local gradient is:
+*Why is that bad?* Recall from [[Building of micrograd]] how the gradient flows through [[List of Layers#Tanh|`tanh`]] — the local gradient is:
 
 $$\frac{d}{dx}\tanh(x) = 1 - \tanh^2(x) = 1 - t^2$$
 
-If $t \approx \pm 1$, this local gradient is ≈ 0, and by the chain rule the incoming gradient gets **multiplied by ~0**: the gradient is destroyed at that neuron. The further into the flat tail, the more the gradient shrinks. tanh can only ever *decrease* the gradient flowing through it.
+If $t \approx \pm 1$, this local gradient is ≈ 0, and by the chain rule the incoming gradient gets **multiplied by ~0**: the gradient is destroyed at that neuron. The further into the flat tail, the more the gradient shrinks. [[List of Layers#Tanh|tanh]] can only ever *decrease* the gradient flowing through it.
 
 ![[Pasted image 20260810100940.png|390]]
 
-We can visualize the damage directly: `(h.abs() > 0.99)` is a boolean tensor of shape `[32, 200]` (examples × neurons) — white where a neuron is in the flat tail. If an **entire column** (neuron) is white — i.e. no example ever lands in the active region of that tanh — the neuron's weights get zero gradient forever: it's a **dead neuron**, and it will never learn.
+We can visualize the damage directly: `(h.abs() > 0.99)` is a boolean tensor of shape `[32, 200]` (examples × neurons) — white where a neuron is in the flat tail. If an **entire column** (neuron) is white — i.e. no example ever lands in the active region of that [[List of Layers#Tanh|tanh]] — the neuron's weights get zero gradient forever: it's a **dead neuron**, and it will never learn.
 
 ![[Pasted image 20260810101032.png]]
 
->[!WARNING] Dead neurons are not unique to tanh
+>[!WARNING] Dead neurons are not unique to [[List of Layers#Tanh|tanh]]
 >![[Pasted image 20260810101047.png]]
-> - **Sigmoid** — same squashing shape, same problem.
-> - **ReLU** — has a completely flat region below zero, so a neuron whose pre-activations are always negative is *exactly* dead (gradient is exactly 0, not just tiny). Dead ReLUs can appear at initialization by chance, or during training when a too-large learning rate knocks a neuron off the data manifold — from then on nothing ever activates it again. Karpathy calls it *"permanent brain damage"*.
-> - **Leaky ReLU / ELU** have no flat tails, so they're more forgiving.
+> - **[[List of Layers#Sigmoid|Sigmoid]]** — same squashing shape, same problem.
+> - **[[List of Layers#ReLU|ReLU]]** — has a completely flat region below zero, so a neuron whose pre-activations are always negative is *exactly* dead (gradient is exactly 0, not just tiny). Dead ReLUs can appear at initialization by chance, or during training when a too-large learning rate knocks a neuron off the data manifold — from then on nothing ever activates it again. Karpathy calls it *"permanent brain damage"*.
+> - **[[List of Layers#ReLU|Leaky ReLU / ELU]]** have no flat tails, so they're more forgiving.
 
 ## The fix: shrink the weights (but how much?)
 
@@ -107,13 +107,13 @@ The distribution **spreads** by $\sqrt{\text{fan\_in}}$. To keep it unit-Gaussia
 W = torch.randn((fan_in, fan_out)) / fan_in**0.5
 ```
 
-That's the core of **Kaiming/He initialization** from the paper *"Delving Deep into Rectifiers"*. But there's a subtlety: the nonlinearity also squashes. Since tanh (and ReLU) are *contractive* — they squeeze the distribution — we multiply by a **gain** to push back:
+That's the core of **Kaiming/He initialization** from the paper *"Delving Deep into Rectifiers"*. But there's a subtlety: the nonlinearity also squashes. Since [[List of Layers#Tanh|tanh]] (and [[List of Layers#ReLU|ReLU]]) are *contractive* — they squeeze the distribution — we multiply by a **gain** to push back:
 
 | Nonlinearity | Gain |
 |---|---|
 | linear (no activation) | 1 |
-| ReLU | $\sqrt{2}$ (clamps away half the distribution) |
-| tanh | $\tfrac{5}{3}$ (fights the squashing) |
+| [[List of Layers#ReLU|ReLU]] | $\sqrt{2}$ (clamps away half the distribution) |
+| [[List of Layers#Tanh|tanh]] | $\tfrac{5}{3}$ (fights the squashing) |
 
 For our first layer, fan-in $= n_{embd} \times block\_size = 10 \times 3 = 30$:
 
@@ -124,7 +124,7 @@ W1 = torch.randn((n_embd * block_size, n_hidden)) * (5/3) / (n_embd * block_size
 
 PyTorch has this built in: `torch.nn.init.kaiming_normal_(w, mode='fan_in', nonlinearity='tanh')` — the most common init in practice.
 
-With Kaiming init we land at the **same 2.10** validation loss — but without any hand-tuning. Modern practice has made even this less critical, thanks to a few *modern innovations*: **residual connections**, **normalization layers** (batch/layer/group), and better optimizers (**Adam**). Which brings us to the main event.
+With Kaiming init we land at the **same 2.10** validation loss — but without any hand-tuning. Modern practice has made even this less critical, thanks to a few *modern innovations*: **residual connections**, **normalization layers** ([[List of Layers#BatchNorm1d|batch]]/layer/group), and better optimizers (**Adam**). Which brings us to the main event.
 
 # Batch normalization
 
@@ -137,11 +137,11 @@ We keep saying *"we want the pre-activations to be roughly unit Gaussian"*... so
 >[!Note]
 >Gaussian Distribution is just *Normal distribution*
 
-That's the (initially crazy-sounding) insight of **batchnorm**: standardizing a tensor to zero mean and unit variance is a perfectly **differentiable** operation, so we can insert it into the network as a layer.
+That's the (initially crazy-sounding) insight of **[[List of Layers#BatchNorm1d|batchnorm]]**: standardizing a tensor to zero mean and unit variance is a perfectly **differentiable** operation, so we can insert it into the network as a layer.
 
 ## The manual implementation
 
-We insert it between the hidden linear layer and the tanh (its customary position — after the linear layer, before the nonlinearity):
+We insert it between the hidden [[List of Layers#Linear|linear]] layer and the [[List of Layers#Tanh|tanh]] (its customary position — after the [[List of Layers#Linear|linear]] layer, before the nonlinearity):
 
 ```python
 hpreact = embcat @ W1 + b1          # [32, 200]: 32 examples x 200 neurons
@@ -163,21 +163,21 @@ h = torch.tanh(hpreact)                                 # healthy activations!
 
 ## Why the extra gain and bias?
 
-If we *only* standardized, every neuron's pre-activation would be forced to be exactly unit Gaussian **forever**, and the network could never make some neurons more "trigger happy" than others. So batchnorm adds two **trainable** parameters, initialized to the identity:
+If we *only* standardized, every neuron's pre-activation would be forced to be exactly unit Gaussian **forever**, and the network could never make some neurons more "trigger happy" than others. So [[List of Layers#BatchNorm1d|batchnorm]] adds two **trainable** parameters, initialized to the identity:
 
 ```python
 bngain = torch.ones((1, n_hidden))    # gamma — scale
 bnbias = torch.zeros((1, n_hidden))   # beta  — shift
 ```
 
-At init, the output is exactly unit Gaussian *no matter what* `hpreact` looks like. During training, gradients flow into `bngain`/`bnbias` and let the network move the distribution around. So batchnorm decouples **"what the statistics are"** (fixed by the normalization) from **"where the distribution sits"** (learned).
+At init, the output is exactly unit Gaussian *no matter what* `hpreact` looks like. During training, gradients flow into `bngain`/`bnbias` and let the network move the distribution around. So [[List of Layers#BatchNorm1d|batchnorm]] decouples **"what the statistics are"** (fixed by the normalization) from **"where the distribution sits"** (learned).
 
 >[!NOTE] The "terrible cost": examples get coupled
-> Before, examples in a batch were processed **independently** — batching was just an efficiency trick. With batchnorm, an example's activation now depends on *which other examples happen to be in its batch* (they influence the mean/var). The activations "jitter" from batch to batch. This sounds like a bug, but it acts as a **regularizer** — it pads/jitters the inputs like a mild data augmentation, making it harder to overfit. This side effect is a big reason batchnorm is hard to remove even though nobody likes the coupling (it causes lots of bugs).
+> Before, examples in a batch were processed **independently** — batching was just an efficiency trick. With [[List of Layers#BatchNorm1d|batchnorm]], an example's activation now depends on *which other examples happen to be in its batch* (they influence the mean/var). The activations "jitter" from batch to batch. This sounds like a bug, but it acts as a **regularizer** — it pads/jitters the inputs like a mild data augmentation, making it harder to overfit. This side effect is a big reason batchnorm is hard to remove even though nobody likes the coupling (it causes lots of bugs).
 
 ## The test-time problem: you need a batch, but you have one example
 
-At test time we want to feed a **single** example. But batchnorm needs a batch to estimate mean/var! The paper's proposal comes in two flavors:
+At test time we want to feed a **single** example. But [[List of Layers#BatchNorm1d|batchnorm]] needs a batch to estimate mean/var! The paper's proposal comes in two flavors:
 
 **Option 1 — stage 2 calibration:** after training, run the whole training set through the network once (`torch.no_grad()`, no gradient bookkeeping), estimate the mean/std once over all of it, and freeze those numbers for inference.
 
@@ -198,9 +198,9 @@ The running estimates end up close to (but not identical to) the explicit stage-
 ## Two more details
 
 - **$\varepsilon = 10^{-5}$** in `bnvar + 1e-5`: prevents division by zero if a batch has exactly zero variance. Doesn't change results meaningfully; Karpathy skips it in the simple example.
-- **The bias before batchnorm is useless.** Whatever `b1` adds gets subtracted right back out by the centering — so `b1.grad` is exactly zero, it never learns, it's just wasted parameters. When a layer is followed by batchnorm, drop its bias entirely (`bias=False`), because batchnorm has its own.
+- **The bias before [[List of Layers#BatchNorm1d|batchnorm]] is useless.** Whatever `b1` adds gets subtracted right back out by the centering — so `b1.grad` is exactly zero, it never learns, it's just wasted parameters. When a layer is followed by [[List of Layers#BatchNorm1d|batchnorm]], drop its bias entirely (`bias=False`), because batchnorm has its own.
 
-## BatchNorm1d in PyTorch
+## [[List of Layers#BatchNorm1d|BatchNorm1d]] in PyTorch
 
 The manual code above is exactly `torch.nn.BatchNorm1d(num_features=200)`:
 
@@ -209,17 +209,17 @@ The manual code above is exactly `torch.nn.BatchNorm1d(num_features=200)`:
 - **`eps`** (default `1e-5`), **`momentum`** (default `0.1`, use ~`0.001` for small batches).
 - Like most `nn.Module`s it has a `.training` flag: batch stats + running-stat update during training; frozen running stats during eval.
 
-The standard **motif** in modern networks is *weight layer → normalization → nonlinearity* — e.g. in a ResNet: `Conv → BatchNorm → ReLU` (with `bias=False` on the conv, exactly because of the point above).
+The standard **motif** in modern networks is *weight layer → [[List of Layers#BatchNorm1d|normalization]] → nonlinearity* — e.g. in a ResNet: `Conv → BatchNorm → ReLU` (with `bias=False` on the conv, exactly because of the point above).
 
 # Bonus: torch-ifying the code and diagnostic plots
 
-Karpathy wraps the layers into module classes (`Linear`, `BatchNorm1d`, `Tanh`) with the same API as PyTorch, then stacks them into a **6-layer** MLP (46,000 parameters): Linear → Tanh → Linear → Tanh → ... → Linear → Softmax. 
+Karpathy wraps the layers into module classes (`Linear`, `BatchNorm1d`, `Tanh`) with the same API as PyTorch, then stacks them into a **6-layer** MLP (46,000 parameters): [[List of Layers#Linear|Linear]] → [[List of Layers#Tanh|Tanh]] → [[List of Layers#Linear|Linear]] → [[List of Layers#Tanh|Tanh]] → ... → [[List of Layers#Linear|Linear]] → [[List of Layers#Softmax|Softmax]]. 
 
 ![[Pasted image 20260811085937.png|513]]
 
 This lets us *systematically* inspect the network's health:
 
-1. **Forward activation histograms** — at every tanh layer, plot the histogram of `h`, plus the mean, std, and **% saturation** ($|t| > 0.97$, i.e. in the gradient-killing tail). With gain $\tfrac{5}{3}$ the std stabilizes around **0.65** with ~5% saturation (the first layer starts more saturated, ~20%, then everything settles down). Gain too small (1) → activations slowly **shrink to zero** through the layers. Gain too big (3) → everything saturates.
+1. **Forward activation histograms** — at every [[List of Layers#Tanh|tanh]] layer, plot the histogram of `h`, plus the mean, std, and **% saturation** ($|t| > 0.97$, i.e. in the gradient-killing tail). With gain $\tfrac{5}{3}$ the std stabilizes around **0.65** with ~5% saturation (the first layer starts more saturated, ~20%, then everything settles down). Gain too small (1) → activations slowly **shrink to zero** through the layers. Gain too big (3) → everything saturates.
 ![[Pasted image 20260811090550.png|456]]
 	Normal activation histograms.
 ![[Pasted image 20260811091715.png|460]]
@@ -244,33 +244,13 @@ update_to_data = log10( (lr * p.grad).std() / p.data.std() )
 ```
 
 ![[Pasted image 20260811094432.png|587]]
-	The pink line, layer 11, is the [[Softmax]] layer. 
+	The pink line, layer 11, is the [[List of Layers#Softmax|Softmax]] layer. 
 
-This compares the size of the *update we'll apply* to the size of the *values being updated*. It is a good reflection of learning rate. A good heuristic: about **$10^{-3}$** (log scale ≈ −3). Much higher → learning rate too big; much lower (e.g. −4) → training too slow. The **last layer**, the [[softmax]] layer, is typically an outlier (its weights were artificially shrunk by ×0.01 to fix the softmax, so the ratio starts high until it grows into its weights). Forgetting fan-in normalization entirely shows up immediately: saturated activations, scrambled gradients, and ratios like −1 to −1.5.
-
-## With batchnorm, everything becomes robust
-
-Insert a `BatchNorm1d` before every tanh:
-
-- The activation histograms *necessarily* look perfect (std ≈ 0.65, ~2% saturation) — every layer is normalized by construction.
-- Changing the linear gains barely matters (e.g. gain 2 vs $\tfrac{5}{3}$ — activations identical). Even **no fan-in normalization at all** works, though you may need to retune the learning rate (Karpathy needed ~10× larger) because batchnorm rescales the incoming gradients.
-
-*Why even keep the tanh layers, if they cause all this gain-tuning trouble?* Because a stack of pure linear layers **collapses to a single linear transformation** — no added representational power, no matter how deep. The nonlinearity is what turns the sandwich into a universal approximator.
-
-# Results and takeaways
-
-| Fix | Validation loss |
-|---|---|
-| Original MLP (Part 2) | 2.17 |
-| + logits ≈ 0 at init (fix confident softmax) | 2.13 |
-| + tanh not saturated (scaled W1, b1) | 2.10 |
-| + Kaiming init (principled, no magic numbers) | 2.10 |
-| + BatchNorm | ~2.10 |
-
-*BatchNorm didn't actually improve the final loss here!* That's expected: with one hidden layer we could already compute the right weight scale by hand, so batchnorm has little to do. Its payoff comes in **deep** networks where hand-tuning every layer's scale is intractable. And our loss isn't bottlenecked by *optimization* anymore — it's bottlenecked by **context length** (3 characters is just not enough). Pushing further needs more powerful architectures: recurrent networks and transformers, which is exactly what the next parts of the tutorial build toward.
+This compares the size of the *update we'll apply* to the size of the *values being updated*. It is a good reflection of learning rate. A good heuristic: about **$10^{-3}$** (log scale ≈ −3). Much higher → learning rate too big; much lower (e.g. −4) → training too slow. The **last layer**, the [[List of Layers#Softmax|softmax]] layer, is typically an outlier (its weights were artificially shrunk by ×0.01 to fix the [[List of Layers#Softmax|softmax]], so the ratio starts high until it grows into its weights). Forgetting fan-in normalization entirely shows up immediately: saturated activations, scrambled gradients, and ratios like −1 to −1.5.
 
 >[!NOTE] The moral of the story
 > 1. At initialization, expect the loss you'd get from a **uniform** distribution — anything much worse means the network is confidently wrong.
-> 2. Keep activations **roughly unit-Gaussian** throughout the net: not too small (tanh inactive, gradients shrink), not too big (tanh saturated, gradients killed).
+> 2. Keep activations **roughly unit-Gaussian** throughout the net: not too small ([[List of Layers#Tanh|tanh]] inactive, gradients shrink), not too big ([[List of Layers#Tanh|tanh]] saturated, gradients killed).
 > 3. Initialize weights with **Kaiming init** rather than magic numbers.
-> 4. **BatchNorm** is the first normalization layer: center + scale with a learnable gain/bias, running stats for test time. It's powerful, but it couples the examples in a batch — which causes bugs, and why people increasingly prefer layer/group normalization.
+> 4. **[[List of Layers#BatchNorm1d|BatchNorm]]** is the first normalization layer: center + scale with a learnable gain/bias, running stats for test time. It's powerful, but it couples the examples in a batch — which causes bugs, and why people increasingly prefer layer/group normalization.
+

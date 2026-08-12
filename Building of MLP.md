@@ -28,7 +28,7 @@ This would work because the probability function is a **smooth** function of the
 *Knowledge transfers between similar symbols. That is generalization.*
 
 >[!NOTE] The paper learns two things at once
->1. A **distributed representation** (embedding vector) for every word/character
+>1. A **distributed representation** ([[List of Layers#Embedding|embedding]] vector) for every word/character
 >2. The **probability function** expressed in terms of those vectors
 >
 >Both are learned together by maximizing the log-likelihood of the training data ([[Likelihood|maximum likelihood estimation]]).
@@ -39,11 +39,11 @@ The model's architecture (we use characters, $|V| = 27$) is:
 
 ![[Pasted image 20260731225921.png|485]]
 
-1. **Embedding lookup table $C$** — a matrix of size $|V| \times m$ (e.g. $27 \times 30$). Each symbol's index *plucks out a row*: its learned vector (which is *30 dimensions* in this case). Crucially, $C$ is **shared** across all positions in the context.
+1. **[[List of Layers#Embedding|Embedding]] lookup table $C$** — a matrix of size $|V| \times m$ (e.g. $27 \times 30$). Each symbol's index *plucks out a row*: its learned vector (which is *30 dimensions* in this case). Crucially, $C$ is **shared** across all positions in the context.
 2. **Concatenation** — the vectors of the last $n-1$ symbols are glued together into one big input vector $x = (C(w_{t-1}), C(w_{t-2}), \dots, C(w_{t-n+1}))$.
-3. **Hidden layer** — a fully connected layer followed by a $\tanh$ non-linearity.
+3. **Hidden layer** — a [[List of Layers#Linear|fully connected]] layer followed by a $\tanh$ non-linearity.
 4. **Output layer** — produces one raw score ([[Logits|logit]]) per possible next symbol.
-5. **Softmax** — turns the logits into probabilities.
+5. **[[List of Layers#Softmax|Softmax]]** — turns the logits into probabilities.
 
 The the whole network can be summarized as one formula:
 
@@ -73,7 +73,7 @@ block_size = 3
 
 `X` holds the contexts (one row of `block_size` integers per example), `Y` holds the label — the index of the actual next character.
 
-## Step 2: the embedding lookup table C
+## Step 2: the [[List of Layers#Embedding|embedding]] lookup table C
 
 ```python
 C = torch.randn((27, 2))   # 27 characters, embedded in 2D (so we can visualize later)
@@ -83,11 +83,11 @@ emb = C[X]                 # emb.shape -> [N, 3, 2], the vectors for every conte
 *Indexing into C with a tensor of indices just works in PyTorch — no loop needed.*
 
 >[!RECALL] Why is this the same as one-hot encoding?
->From [[One-hot encoding]]: a one-hot vector multiplied by a matrix **picks out one row** of the matrix (all other entries are multiplied by 0). So `one_hot(x) @ C == C[x]`. The embedding layer is just a **linear layer with no activation**. Wring in index form is just for convenience. 
+>From [[One-hot encoding]]: a one-hot vector multiplied by a matrix **picks out one row** of the matrix (all other entries are multiplied by 0). So `one_hot(x) @ C == C[x]`. The [[List of Layers#Embedding|embedding]] layer is just a [[List of Layers#Linear|linear layer]] with no activation. Wring in index form is just for convenience. 
 
 ## Step 3: the hidden layer
 
-The embeddings of the 3 context characters are stacked in a 3rd dimension, so we first flatten them (concatenate the 3 vectors into one):
+The [[List of Layers#Embedding|embeddings]] of the 3 context characters are stacked in a 3rd dimension, so we first flatten them (concatenate the 3 vectors into one):
 
 ```python
 emb_cat = emb.view(-1, 6)          # [N, 3, 2] -> [N, 6]  (concatenationk)
@@ -108,7 +108,7 @@ counts = logits.exp()              # "fake counts"
 probs = counts / counts.sum(dim=1, keepdim=True)  # each row sums to 1
 ```
 
-This is the [[Softmax|softmax]] we already know. `probs[i, j]` = the model's probability that character `j` comes after context `i`.
+This is the [[List of Layers#Softmax|softmax]] we already know. `probs[i, j]` = the model's probability that character `j` comes after context `i`.
 
 ## Step 5: the loss
 
@@ -124,7 +124,7 @@ In practice we use PyTorch's built-in **cross entropy** function, which computes
 loss = F.cross_entropy(logits, Y)
 ```
 
-*Why prefer `F.cross_entropy`?* It fuses softmax + log + indexing into one efficient kernel (no giant intermediate tensors), has a cleaner backward pass, and is numerically stable (it subtracts the max logit internally, avoiding overflow — see [[Softmax]]).
+*Why prefer `F.cross_entropy`?* It fuses [[List of Layers#Softmax|softmax]] + log + indexing into one efficient kernel (no giant intermediate tensors), has a cleaner backward pass, and is numerically stable (it subtracts the max logit internally, avoiding overflow — see [[List of Layers#Softmax|Softmax]]).
 ## Model Overview
 For a overview for the model, see [[MLP Computation Graph.html]]. 
 ![[Pasted image 20260803100737.png]]
@@ -159,7 +159,7 @@ lrs = 10 ** torch.linspace(-3, 0, 1000)   # 0.001 -> 0.01 -> ... -> 1.0
 
 ## Results
 
-Training a slightly bigger version (10-dim embeddings, 200 hidden neurons, ~11,000 parameters; learning rate 0.1 decayed to 0.01) gives:
+Training a slightly bigger version (10-dim [[List of Layers#Embedding|embeddings]], 200 hidden neurons, ~11,000 parameters; learning rate 0.1 decayed to 0.01) gives:
 
 | | Loss |
 |---|---|
@@ -193,7 +193,7 @@ for _ in range(20):                    # generate 20 names
 
 The outputs — like **ham, joes, lela** — already sound much more name-like than the bigram's gibberish.
 
-# What the embeddings learned
+# What the [[List of Layers#Embedding|embeddings]] learned
 
 Because we embedded in 2D, we can plot every character's vector after training:
 ![[Pasted image 20260803102352.png|397]]

@@ -23,7 +23,7 @@ Each cell does a set of simple calculation:
 2. multiply each output by a weight (`w`)
 3. sum all of them together ($x_1 w_1 + x_2 w_2 + \dots + x_n w_n$)
 4. add a bias (`b`)
-5. pass this value to an activation function. It would be non-linear and compress the result in (0, 1). Usually, it would be `tanh`.
+5. pass this value to an activation function. It would be non-linear and compress the result in (0, 1). Usually, it would be [[List of Layers#Tanh|`tanh`]].
 6. output this value to the next layer of neuron cells
 
 If we connect the layers of cells together, we get: 
@@ -87,11 +87,11 @@ The backward pass traces the computation graph in reverse topological order. Sta
 2. **Sum node** (summing per-sample errors): each term's local derivative distributes $1 \cdot \frac{\partial L}{\partial \text{term}_i}$
 3. **Squared-error nodes**: each $(\hat{y}_i - y_i)^2$ passes gradient $2(\hat{y}_i - y_i)$ to the subtraction node
 4. **Subtraction nodes**: gradient flows to $\hat{y}_i$ (unchanged) and $y_i$ (negated) — but $y_i$ is a constant, so its gradient is ignored
-5. **Output neurons**: gradients flow through `tanh`, then through weighted sums, splitting across all incoming weights
-6. **Hidden layers**: the same pattern repeats — `tanh` gradient $\cdot$ incoming gradient, then branched out across weights and biases
+5. **Output neurons**: gradients flow through [[List of Layers#Tanh|`tanh`]], then through weighted sums, splitting across all incoming weights
+6. **Hidden layers**: the same pattern repeats — [[List of Layers#Tanh|`tanh`]] gradient $\cdot$ incoming gradient, then branched out across weights and biases
 7. **Weights and biases**: every `w` and `b` in the network now has a populated `.grad` — the partial derivative $\frac{\partial L}{\partial w}$ (or $\frac{\partial L}{\partial b}$)
 
-The `tanh` activation's local derivative is key: $\frac{d}{dx}\tanh(x) = 1 - \tanh^2(x)$. This is why we store the `tanh` output during the forward pass — the backward pass needs it to compute the local gradient.
+The [[List of Layers#Tanh|`tanh`]] activation's local derivative is key: $\frac{d}{dx}\tanh(x) = 1 - \tanh^2(x)$. This is why we store the [[List of Layers#Tanh|`tanh`]] output during the forward pass — the backward pass needs it to compute the local gradient.
 
 ## Gradient Descent — Updating the Weights
 
