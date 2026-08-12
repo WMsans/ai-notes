@@ -16,7 +16,7 @@ The layer reference of this vault. Each entry covers **what the layer does**, **
 
 **What it does:** A fully connected (dense) layer: `y = x @ W + b`. Each neuron computes a weighted sum of *all* its inputs — a [[Dot product]] of one input row against one weight column — plus a bias. Every output neuron depends on every input, hence "fully connected". The weights are the layer's parameters, learned by backprop. It is the "workhorse" transformation of an MLP.
 
-**Where it is usually placed:** Between every pair of feature vectors in a network — it is what fills *hidden layers* and the *output layer*. The standard modern motif is `Linear → normalization → nonlinearity`. When a Linear is followed by [[List of Layers#BatchNorm1d|BatchNorm]], its bias is dropped (`bias=False`): the normalization subtracts the bias right back out, so it would never learn (its gradient is exactly zero).
+**Where it is usually placed:** Between every pair of feature vectors in a network — it is what fills *hidden layers* and the *output layer*. The standard modern motif is **Linear → normalization → nonlinearity**. When a Linear is followed by [[List of Layers#BatchNorm1d|BatchNorm]], its bias is dropped (`bias=False`): the normalization subtracts the bias right back out, so it would never learn (its gradient is exactly zero).
 
 ## BatchNorm1d
 

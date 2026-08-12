@@ -9,8 +9,8 @@ This note walks through `makemore_part3_bn.ipynb` — the third video in Karpath
 
 ![[Basic MLP architecture.png]]
 
-- **Input:** 3 characters (block_size = 3), each mapped to a 10-dim vector by the [[List of Layers#Embedding|Embedding]] table `C` (`27 × 10`), then concatenated into a 30-dim vector.
-- **Body:** five hidden blocks of `[[List of Layers#Linear|Linear]] → [[List of Layers#BatchNorm1d|BatchNorm1d]] → [[List of Layers#Tanh|Tanh]]` (100 neurons each).
+- **Input:** *3 characters* (block_size = 3), each mapped to a 10-dim vector by the [[List of Layers#Embedding|Embedding]] table `C` (`27 × 10`), then concatenated into a 30-dim vector.
+- **Body:** five hidden blocks of [[List of Layers#Linear|Linear]] → [[List of Layers#BatchNorm1d|BatchNorm1d]] → [[List of Layers#Tanh|Tanh]] (100 neurons each).
 - **Head:** a final [[List of Layers#Linear|Linear]] to 27 logits, one [[List of Layers#BatchNorm1d|BatchNorm1d]], then [[List of Layers#Softmax|Softmax]] into probabilities.
 - **Total:** 47,024 parameters. Loss: `F.cross_entropy(logits, y)`.
 
