@@ -1,6 +1,6 @@
 # Basic MLP Overview
 
-This note walks through `makemore_part3_bn.ipynb` — the third video in Karpathy's *makemore* series. It takes the character-level [[Building of MLP|MLP]] (predict the next character from 3 characters of context), fixes two initialization bugs, then stacks the whole thing **deeper** with [[List of Layers#BatchNorm1d|BatchNorm]] doing the heavy lifting. The layer reference for everything mentioned here is [[List of Layers]].
+This guide takes the character-level [[Building of MLP|MLP]] (predict the next character from 3 characters of context), fixes two initialization bugs, then stacks the whole thing **deeper** with [[List of Layers#BatchNorm1d|BatchNorm]] doing the heavy lifting. The layer reference for everything mentioned here is [[List of Layers]].
 
 > [!NOTE] TL;DR
 > The notebook is a story in four acts: (1) the plain MLP from before, (2) *why* it starts badly — logits too big and [[List of Layers#Tanh|tanh]] saturated, (3) the principled fix — **Kaiming init**, then **BatchNorm**, (4) a deeper 6-layer network that trains cleanly with almost no hand-tuning.
