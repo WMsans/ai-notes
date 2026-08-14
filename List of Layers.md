@@ -31,7 +31,7 @@ class Embedding:
 
 **What it does:** Reshapes its input into 2D rows — `x.view(x.shape[0], -1)` collapses every dimension after the batch into one, gluing the per-token vectors end to end. No parameters, no math: it only rearranges memory so the next layer sees one long vector per example.
 
-**Where it is usually placed:** Right after the [[List of Layers#Embedding|Embedding]] when the context holds several tokens: the plucked vectors go from `[N, block_size, n_embd]` to `[N, block_size * n_embd]` before the first [[List of Layers#Linear|Linear]]. 
+**Where it is usually placed:** Right after the [[List of Layers#Embedding|Embedding]] when the context holds several tokens: the plucked vectors go from `[N, block_size, n_embd]` to `[N, block_size * n_embd]` before the first [[List of Layers#Linear|Linear]]. It is *usually* and *only* used with [[List of Layers#Linear|Linear]]. 
 
 **Example implementation:**
 

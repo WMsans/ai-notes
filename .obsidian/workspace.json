@@ -50,7 +50,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -108,8 +108,7 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "horizontal",
@@ -129,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "List of Layers.md",
+                "file": "Building of Wavenet.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -227,15 +226,20 @@
       "bases:Create new base": false
     }
   },
-  "active": "17c5a8ebcc81adba",
+  "active": "5dcf854cb700a8b1",
   "lastOpenFiles": [
+    "Pasted image 20260814095432.png",
+    "List of Layers.md",
     "Building of Wavenet.md",
+    "Pasted image 20260814095218.png",
+    "Pasted image 20260814093553.png",
+    "Building of MLP.md",
+    "Pasted image 20260814092705.png",
+    "Pasted image 20260814092505.png",
     "Pasted image 20260812121525.png",
     "Pasted image 20260812121456.png",
     "Pasted image 20260812121200.png",
-    "List of Layers.md",
     "Basic MLP Overview.md",
-    "Building of MLP.md",
     "Softmax.md",
     "Activations & Gradients, BatchNorm in MLP.md",
     "Basic MLP training loss.png",
@@ -243,10 +247,6 @@
     "Untitled 1.base",
     "Layer - Tanh.png",
     "Layer - Softmax.png",
-    "Layer - Sigmoid.png",
-    "Layer - ReLU.png",
-    "Layer - Linear.png",
-    "Layer - LayerNorm.png",
     "Backpropagation in depth.md",
     "Building of Bigram.md",
     "Building of micrograd.md",
