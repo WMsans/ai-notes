@@ -82,3 +82,16 @@ We get
 It is the exact 3-layer structure as the graph now: 
 ![[Pasted image 20260814092705.png|505]]
 
+## Batchnorm in Wavenet
+Now, the `torch.mean(dim=0, keepdim=true)` and `torch.var(dim=0, keepdim=true)` only take the mean or standard deviation for the first dimention. 
+
+![[Pasted image 20260815151045.png|246]]
+> The bigram dimension is not averaged properly, and thus would not be normalized. 
+
+Luckily, the `dim` parameter can be a tuple, meaning taking multiple dimensions at once.
+```python
+e.mean((0, 1), keepdim=True)
+e.var（（0,1）,keepdim=True)
+```
+So we can get the correct dimensions: 
+![[Pasted image 20260815155716.png|172]]
