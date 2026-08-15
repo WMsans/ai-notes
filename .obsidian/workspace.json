@@ -4,39 +4,25 @@
     "type": "split",
     "children": [
       {
-        "id": "9504d18e0295486a",
+        "id": "9bc9cdec37982f6d",
         "type": "tabs",
         "children": [
           {
-            "id": "d2b2442283d19d7e",
+            "id": "4a22f24a60cf29a3",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Building of MLP.md",
+                "file": "Activations & Gradients, BatchNorm in MLP.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Building of MLP"
+              "title": "Activations & Gradients, BatchNorm in MLP"
             }
           },
           {
-            "id": "17c5a8ebcc81adba",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "List of Layers.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "List of Layers"
-            }
-          },
-          {
-            "id": "5dcf854cb700a8b1",
+            "id": "c2ad70c385cd1736",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -48,9 +34,23 @@
               "icon": "lucide-file",
               "title": "Building of Wavenet"
             }
+          },
+          {
+            "id": "3b457a3a60ffadc2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "List of Layers.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "List of Layers"
+            }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -100,10 +100,7 @@
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {
-                "showSearch": false,
-                "searchQuery": ""
-              },
+              "state": {},
               "icon": "lucide-bookmark",
               "title": "Bookmarks"
             }
@@ -213,7 +210,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 235.518310546875
+    "width": 297.3397216796875
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -226,28 +223,31 @@
       "bases:Create new base": false
     }
   },
-  "active": "5dcf854cb700a8b1",
+  "active": "c2ad70c385cd1736",
   "lastOpenFiles": [
+    "Pasted image 20260815113407.png",
+    "Pasted image 20260815113205.png",
+    "Pasted image 20260815111725.png",
     "Pasted image 20260814095432.png",
-    "List of Layers.md",
-    "Building of Wavenet.md",
     "Pasted image 20260814095218.png",
     "Pasted image 20260814093553.png",
-    "Building of MLP.md",
     "Pasted image 20260814092705.png",
-    "Pasted image 20260814092505.png",
     "Pasted image 20260812121525.png",
     "Pasted image 20260812121456.png",
     "Pasted image 20260812121200.png",
+    "List of Layers.md",
     "Basic MLP Overview.md",
-    "Softmax.md",
+    "Layer - LayerNorm.png",
     "Activations & Gradients, BatchNorm in MLP.md",
-    "Basic MLP training loss.png",
-    "Untitled.base",
-    "Untitled 1.base",
-    "Layer - Tanh.png",
-    "Layer - Softmax.png",
+    "Building of Wavenet.md",
+    "Building of MLP.md",
+    "makemore_part3_bn.ipynb",
+    "Unconfirmed 186509.crdownload",
     "Backpropagation in depth.md",
+    "Softmax.md",
+    "Untitled.base",
+    "Untitled 2.base",
+    "Untitled 1.base",
     "Building of Bigram.md",
     "Building of micrograd.md",
     "Likelihood.md",

@@ -52,4 +52,33 @@ Instead of flattening everything into a single layer, we need to flatten it into
 Since the [[List of Layers#Linear|linear layer]] can take any dimension of input, since [[Dot product]] only cares about the matching of the **last dimension of first input** to the **first dimension of second input**. 
 
 ![[Pasted image 20260814095432.png|474]]
-	We can have arbitrary number of dimensions like [4, 5, 6, 80], as long as the weights has [80, X]. 
+> We can have arbitrary number of dimensions like [4, 5, 6, 80], as long as the weights has [80, X]. 
+
+Currently, the flatten layer convert the input size [4 examples, 8 context characters, 10 characteristic vector] to linear size [4 examples, 80 compressed context and characteristics]. Our goal is to flatten it to [4 examples, 4 context bigrams, 20 bi-characteristic vectors]. 
+
+![[Pasted image 20260815111725.png|240]]
+`n` is how much we want to compress. In our case, `n = 2`. 
+
+## Building Wavenet
+We are going to consecutively flatten the layer, each by a scale of 1/2. 
+
+![[Pasted image 20260815113205.png|568]]
+
+Now, if we iterate through the shape of each layer
+```python
+for layer in model.layers:
+	print(layer.out.shape)
+```
+We get
+![[Pasted image 20260815113407.png|220]]
+> The first flatten is [4, 4, 20]
+> The first linear brings it up to [4, 4, 20], since there's 200 hidden neurons in that layer
+> 
+> The second flatten is [4, 2, 400]
+> The second linear bings it back to [4, 2, 200], since there's still 200 hidden neurons in that layer
+> 
+> The final flatten is [4, 400]. We squeeze out the second dimension since it is [1]. 
+
+It is the exact 3-layer structure as the graph now: 
+![[Pasted image 20260814092705.png|505]]
+
