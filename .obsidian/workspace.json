@@ -48,9 +48,23 @@
               "icon": "lucide-file",
               "title": "Building of Wavenet"
             }
+          },
+          {
+            "id": "eab7c5036d20dd77",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Transformer - Attention is all you need.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Transformer - Attention is all you need"
+            }
           }
         ],
-        "currentTab": 2
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -128,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Building of Wavenet.md",
+                "file": "Transformer - Attention is all you need.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -226,8 +240,10 @@
       "bases:Create new base": false
     }
   },
-  "active": "5dcf854cb700a8b1",
+  "active": "eab7c5036d20dd77",
   "lastOpenFiles": [
+    "Building of Wavenet.md",
+    "Transformer - Attention is all you need.md",
     "Pasted image 20260815155716.png",
     "Pasted image 20260815151045.png",
     "Pasted image 20260815113407.png",
@@ -235,13 +251,11 @@
     "Pasted image 20260815111725.png",
     "Pasted image 20260814095432.png",
     "List of Layers.md",
-    "Building of Wavenet.md",
     "Pasted image 20260814095218.png",
     "Pasted image 20260814093553.png",
     "Building of MLP.md",
     "Pasted image 20260814092705.png",
     "Pasted image 20260814092505.png",
-    "Pasted image 20260812121525.png",
     "Basic MLP Overview.md",
     "Softmax.md",
     "Activations & Gradients, BatchNorm in MLP.md",
