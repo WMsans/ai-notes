@@ -22,17 +22,17 @@
             }
           },
           {
-            "id": "5dcf854cb700a8b1",
+            "id": "17c5a8ebcc81adba",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Building of Wavenet.md",
+                "file": "List of Layers.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Building of Wavenet"
+              "title": "List of Layers"
             }
           },
           {
@@ -47,20 +47,6 @@
               },
               "icon": "lucide-file",
               "title": "Transformer - Attention is all you need"
-            }
-          },
-          {
-            "id": "17c5a8ebcc81adba",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "List of Layers.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "List of Layers"
             }
           }
         ],
@@ -243,24 +229,24 @@
   "active": "eab7c5036d20dd77",
   "lastOpenFiles": [
     "List of Layers.md",
-    "Layer - CausalMask.png",
-    "Layer - MultiHeadAttention.png",
+    "Transformer - Attention is all you need.md",
+    "Pasted image 20260818110748.png",
+    "Building of Wavenet.md",
+    "Pasted image 20260818104911.png",
     "docs/superpowers/specs/2026-08-18-recursive-attention-design.md",
     "docs/superpowers/specs",
     "docs/superpowers",
     "docs",
-    "Transformer - Attention is all you need.md",
-    "Basic MLP Overview.md",
-    "Building of Wavenet.md",
     "Pasted image 20260818093408.png",
+    "Layer - MultiHeadAttention.png",
+    "Layer - CausalMask.png",
     "Pasted image 20260815155716.png",
     "Pasted image 20260815151045.png",
     "Pasted image 20260815113407.png",
     "Pasted image 20260815113205.png",
     "Pasted image 20260815111725.png",
-    "Pasted image 20260814095432.png",
-    "Pasted image 20260814095218.png",
     "Building of MLP.md",
+    "Basic MLP Overview.md",
     "Softmax.md",
     "Activations & Gradients, BatchNorm in MLP.md",
     "Untitled.base",

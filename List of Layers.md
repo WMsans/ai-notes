@@ -266,11 +266,11 @@ class LayerNorm:
 
 *No `training` flag and no running stats — train and test behavior are identical.*
 
-## Recursive Attention
+## Multi-head Self-attention
 
 ![[Layer - MultiHeadAttention.png]]
 
-**What it does:** The standard name for this layer is **multi-head self-attention**. Every token produces a **query** (`Q`), a **key** (`K`), and a **value** (`V`) from the same input sequence. A query compares itself with every key using a dot product; the resulting scores decide how much of each value to mix into that token's output. The scores are scaled by the square root of the head width so their variance does not grow with the number of features:
+**What it does:** Every token produces a **query** (`Q`), a **key** (`K`), and a **value** (`V`) from the same input sequence, through three different networks (`Wq`, `Wk`, and `Wv`). A query compares itself with every key using a dot product; the resulting scores decide how much of each value to mix into that token's output. The scores are scaled by the square root of the head width so their variance does not grow with the number of features:
 
 $$
 \operatorname{Attention}(Q, K, V) = \operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}} + M\right)V
