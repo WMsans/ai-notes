@@ -265,3 +265,116 @@ class LayerNorm:
 ```
 
 *No `training` flag and no running stats — train and test behavior are identical.*
+
+## Recursive Attention
+
+![[Layer - MultiHeadAttention.png]]
+
+**What it does:** The standard name for this layer is **multi-head self-attention**. Every token produces a **query** (`Q`), a **key** (`K`), and a **value** (`V`) from the same input sequence. A query compares itself with every key using a dot product; the resulting scores decide how much of each value to mix into that token's output. The scores are scaled by the square root of the head width so their variance does not grow with the number of features:
+
+$$
+\operatorname{Attention}(Q, K, V) = \operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}} + M\right)V
+$$
+
+A single attention head performs this calculation in one feature subspace. **Multi-head** attention splits the embedding into `n_heads` smaller subspaces, runs attention in each one in parallel, concatenates the results, and projects them back to the original embedding width. Different heads can learn different relationships — for example, nearby context, syntax, or a long-range reference.
+
+The input and output both have shape `[B, T, C]`: batch size, sequence length, and embedding width. Inside the layer, each head has width `d_k = C / n_heads`, so `Q`, `K`, and `V` are reshaped to `[B, n_heads, T, d_k]` before the score matrix `[B, n_heads, T, T]` is computed.
+
+![[Layer - CausalMask.png]]
+
+**Masking:** In autoregressive/decoder self-attention, a token must not use information from tokens that come later in the sequence. A **causal mask** therefore keeps the diagonal and lower triangle of the score matrix and replaces the upper triangle with `-∞` *before* softmax. Those entries become probability `0`, while every row still sums to `1`. The mask is not needed for the usual bidirectional self-attention in an encoder.
+
+**Where it is usually placed:** Inside every Transformer block. The encoder uses unmasked multi-head self-attention; the decoder uses causal masked self-attention so it can generate one token at a time without seeing the target tokens that come later. Decoder cross-attention is a related operation, but it is outside this entry.
+
+**Educational implementation:** This version follows the hand-written module style used throughout this note. `Linear` refers to the [[List of Layers#Linear|Linear]] layer defined above. The fixed triangular mask is not a learnable parameter.
+
+```python
+class MultiHeadAttention:
+    def __init__(self, n_embd, n_heads, block_size):
+        if n_embd % n_heads != 0:
+            raise ValueError("n_embd must be divisible by n_heads")
+
+        self.n_embd = n_embd
+        self.n_heads = n_heads
+        self.head_dim = n_embd // n_heads
+        self.block_size = block_size
+
+        # Separate projections let every head learn its own Q/K/V features.
+        self.q_proj = Linear(n_embd, n_embd, bias=False)
+        self.k_proj = Linear(n_embd, n_embd, bias=False)
+        self.v_proj = Linear(n_embd, n_embd, bias=False)
+        self.out_proj = Linear(n_embd, n_embd, bias=False)
+
+        # True means "this position may attend to that position".
+        self.causal_mask = torch.tril(
+            torch.ones((block_size, block_size), dtype=torch.bool)
+        )
+
+    def __call__(self, x):
+        B, T, C = x.shape                         # [B, T, C]
+        if C != self.n_embd:
+            raise ValueError(f"expected embedding width {self.n_embd}, got {C}")
+        if T > self.block_size:
+            raise ValueError("sequence is longer than block_size")
+
+        def split_heads(x):
+            # [B, T, C] -> [B, n_heads, T, head_dim]
+            return x.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+
+        q = split_heads(self.q_proj(x))
+        k = split_heads(self.k_proj(x))
+        v = split_heads(self.v_proj(x))
+
+        scores = q @ k.transpose(-2, -1) / self.head_dim**0.5
+        allowed = self.causal_mask[:T, :T]
+        scores = scores.masked_fill(~allowed, float("-inf"))
+        weights = torch.softmax(scores, dim=-1)       # [B, h, T, T]
+
+        y = weights @ v                               # [B, h, T, head_dim]
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        self.attention_weights = weights              # useful for inspection
+        self.out = self.out_proj(y)
+        return self.out
+
+    def parameters(self):
+        return (
+            self.q_proj.parameters()
+            + self.k_proj.parameters()
+            + self.v_proj.parameters()
+            + self.out_proj.parameters()
+        )
+```
+
+**Production PyTorch implementation:** `nn.MultiheadAttention` performs the projections, head splitting, scaled dot products, and head merging internally. In a boolean `attn_mask`, `True` entries are blocked.
+
+```python
+import torch
+from torch import nn
+
+
+class ProductionMultiHeadAttention(nn.Module):
+    def __init__(self, n_embd, n_heads, dropout=0.0):
+        super().__init__()
+        self.attention = nn.MultiheadAttention(
+            embed_dim=n_embd,
+            num_heads=n_heads,
+            dropout=dropout,
+            batch_first=True,              # x is [B, T, C]
+        )
+
+    def forward(self, x):
+        T = x.size(1)
+        # True above the diagonal blocks future keys/values.
+        causal_mask = torch.triu(
+            torch.ones((T, T), device=x.device, dtype=torch.bool),
+            diagonal=1,
+        )
+        out, _ = self.attention(
+            x, x, x,                         # self-attention: Q = K = V = x
+            attn_mask=causal_mask,
+            need_weights=False,
+        )
+        return out
+```
+
+Some PyTorch versions also expose an `is_causal=True` fast path. The explicit boolean mask above makes the masking rule visible and works across versions that support `nn.MultiheadAttention`.
