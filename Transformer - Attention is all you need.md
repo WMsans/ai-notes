@@ -28,4 +28,20 @@ The encoder is composed of `N = 6` layers. Each layer is composed of a [[List of
 
 ### Recursive Attention
 More detailed explanation are in [[List of Layers#Multi-head Self-attention]]. 
-The input produces a **query** (`Q`), a **key** (`K`), and a **value** (`V`), through three different networks (`Wq`, `Wk`, and `Wv`). 
+The input produces a **query** (`Q`), a **key** (`K`), and a **value** (`V`), through three different networks (`Wq`, `Wk`, and `Wv`). Each network has 512 nuerons (so their shape is [512, 512]). 
+
+Then we can get attention using this formula: 
+$$\operatorname{Attention}(Q, K, V) = \operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+
+
+
+>[!NOTE] Formula explained
+> As a graph: 
+> ![[Pasted image 20260818123909.png|194]]
+> 
+> First, `Q` and all the `K` of the input words in the context does a [[Dot product]]. This is evaluating the **similarity** of this input word to all other words in the context.
+> 
+> Then, we scale it by factor of $$\frac{1}{\sqrt{d_k}}$$
+> `d_k` is dimension of the keys. This is to prevent the product to grow in higher dimentions, and thus stabilize the training. 
+> 
+

@@ -228,8 +228,10 @@
   },
   "active": "eab7c5036d20dd77",
   "lastOpenFiles": [
-    "List of Layers.md",
+    "Dot product.md",
     "Transformer - Attention is all you need.md",
+    "Pasted image 20260818123909.png",
+    "List of Layers.md",
     "Pasted image 20260818110748.png",
     "Building of Wavenet.md",
     "Pasted image 20260818104911.png",
@@ -244,7 +246,6 @@
     "Pasted image 20260815151045.png",
     "Pasted image 20260815113407.png",
     "Pasted image 20260815113205.png",
-    "Pasted image 20260815111725.png",
     "Building of MLP.md",
     "Basic MLP Overview.md",
     "Softmax.md",
@@ -258,7 +259,6 @@
     "MLP Computation Graph.html",
     "One-hot encoding.md",
     "Logits.md",
-    "Dot product.md",
     "create a link.md"
   ]
 }
