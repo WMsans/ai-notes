@@ -278,6 +278,8 @@ $$
 
 A single attention head performs this calculation in one feature subspace. **Multi-head** attention splits the embedding into `n_heads` smaller subspaces, runs attention in each one in parallel, concatenates the results, and projects them back to the original embedding width. Different heads can learn different relationships — for example, nearby context, syntax, or a long-range reference.
 
+![[Pasted image 20260818180608.png|222]]
+
 The input and output both have shape `[B, T, C]`: batch size, sequence length, and embedding width. Inside the layer, each head has width `d_k = C / n_heads`, so `Q`, `K`, and `V` are reshaped to `[B, n_heads, T, d_k]` before the score matrix `[B, n_heads, T, T]` is computed.
 
 ![[Layer - CausalMask.png]]
