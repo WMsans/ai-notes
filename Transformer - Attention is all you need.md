@@ -55,13 +55,29 @@ $$\operatorname{Attention}(Q, K, V) = \operatorname{softmax}\left(\frac{QK^\top}
 #### Multi-headed Self-attention
 
 A single attention head performs this calculation in one feature subspace. 
+
+![[Pasted image 20260818180608.png|222]]
+
 **Multi-head** attention is basically: 
 1. splits the embedding into `n_heads` smaller subspaces
 	1. Each subspace is its own `W_Q`, `W_K`, and `W_V`. 
-	2. The subspace is smaller. If a full `W` is [512, 512], then the sub `W` would be [512, 64]. 
+	2. The subspace is smaller. If a full `W` is [512, 512], divided into 8 subspaces, then the sub `W` would be [512, 512/8 = 64]. 
 2. runs attention in each one in parallel
 	1. Since `W` are only [512, 64], the result of the [[dot product]] to the input [512] would be only [64]. 
 3. concatenates the results
+	1. Since there are 8 subspaces of [64] result, we concatenates them into a [64 * 8 = 512] result.  
 
-![[Pasted image 20260818180608.png|222]]
+This way, each subspace learns different relationships — for example, nearby context, syntax, or a long-range reference. 
+
+### Linear Feedforward
+Using the [[List of Layers#Linear|linear layer]] fuses the **concatenated heads** together, we avoid the bad shape of shabby concatenation artifacts. 
+
+### LayerNorm
+See [[List of Layers#Layernorm]]. This is to stabilize the and lightly randomize the result. 
+
+### Residual Connection
+We add the input vector directly on the output of the multi head attention layer. 
+![[Pasted image 20260818194740.png|259]]
+
+This is to prevent the gradient to shift too far from the input. 
 

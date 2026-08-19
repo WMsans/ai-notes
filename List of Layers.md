@@ -1,6 +1,6 @@
 # List of Layers
 
-The layer reference of this vault. Each entry covers **what the layer does**, **where it is usually placed** in a network, where it appears in `makemore_part3_bn.ipynb` (the [[Basic MLP Overview|Basic MLP Overview]] note), and an **example implementation** in the notebook's module style — a class with `__call__` and a `parameters()` method (assumes `torch` is imported).
+The layer reference of this vault. Each entry covers **what the layer does**, **where it is usually placed** in a network (the [[Basic MLP Overview|Basic MLP Overview]] note), and an **example implementation** in the notebook's module style — a class with `__call__` and a `parameters()` method (assumes `torch` is imported).
 
 ## Embedding
 
@@ -214,7 +214,7 @@ class Sigmoid:
 
 **What it does:** During training, randomly zeroes a fraction (e.g. 50%) of a layer's activations, forcing the network not to rely on any single neuron — a **regularizer** that fights overfitting. At test time no neurons are dropped; the layer's outputs are scaled to match the training-time expectation.
 
-**Where it is usually placed:** After the nonlinearity, typically on the large hidden layers near the end of the network (e.g. before the final [[List of Layers#Linear|Linear]]). Not used in `makemore_part3_bn.ipynb`.
+**Where it is usually placed:** After the nonlinearity, typically on the large hidden layers near the end of the network (e.g. before the final [[List of Layers#Linear|Linear]]). 
 
 **Example implementation** (inverted dropout, the PyTorch convention):
 
@@ -242,7 +242,7 @@ class Dropout:
 
 **What it does:** The same normalize-then-scale idea as [[List of Layers#BatchNorm1d|BatchNorm]], but the statistics are computed **per example, over the feature dimension** — not over the batch. No batch coupling, no running statistics needed: training and test behavior are identical.
 
-**Where it is usually placed:** In the same slot as [[List of Layers#BatchNorm1d|BatchNorm]] (after the [[List of Layers#Linear|linear]] layer, before the nonlinearity). Preferred when batches are tiny or 1 — the standard choice in RNNs and Transformers. Not used in `makemore_part3_bn.ipynb`.
+**Where it is usually placed:** In the same slot as [[List of Layers#BatchNorm1d|BatchNorm]] (after the [[List of Layers#Linear|linear]] layer, before the nonlinearity). Preferred when batches are tiny or 1 — the standard choice in RNNs and Transformers. 
 
 **Example implementation:**
 
