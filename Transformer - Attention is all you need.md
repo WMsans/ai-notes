@@ -22,7 +22,7 @@ However, in addition to merely embedding the word's information, we add a **posi
 
 ## Encoder
 The left hand side is the **encoder**, and the right hand side is the **decoder**. 
-The encoder is composed of `N = 6` layers. Each layer is composed of a [[List of Layers#Recursive Attention|Attention]] layer and a [[List of Layers#Linear|Linear layer]] for feed forward. 
+The encoder is composed of `N = 6` layers. Each layer is composed of a [[List of Layers#Multi-head Self-attention|Attention]] layer and a feed forward [[List of Layers#Linear|Linear]] layer.
 
 ![[Pasted image 20260818110748.png|166]] 
 
@@ -69,8 +69,11 @@ A single attention head performs this calculation in one feature subspace.
 
 This way, each subspace learns different relationships — for example, nearby context, syntax, or a long-range reference. 
 
-### Linear Feedforward
+### Feedforward
 Using the [[List of Layers#Linear|linear layer]] fuses the **concatenated heads** together, we avoid the bad shape of shabby concatenation artifacts. 
+
+Here, we use [[List of Layers#ReLU|ReLU]] as the nonlinearity activation function and two [[List of Layers#Linear|linear layers]]. 
+$$FFN(x) = max(0, xW_1 + b_1)W_2 + b_2$$
 
 ### LayerNorm
 See [[List of Layers#Layernorm]]. This is to stabilize the and lightly randomize the result. 
@@ -80,4 +83,39 @@ We add the input vector directly on the output of the multi head attention layer
 ![[Pasted image 20260818194740.png|259]]
 
 This is to prevent the gradient to shift too far from the input. 
+
+![[Pasted image 20260819095542.png|156]]
+
+## Decoder
+Like [[#Encoder]], the decoder also consists `N = 6` layers. 
+However, in each layer, there are **3 sublayers** instead of 2: [[List of Layers#Multi-head Self-attention|Masked Attention]] layer,  [[List of Layers#Multi-head Self-attention|Attention]] layer with the encoder output as input, and feed forward [[List of Layers#Linear|Linear]] layer.
+![[Pasted image 20260819095641.png|160]]
+
+### Masked Attention
+Since we need to train the model to predict a **sequencial data**, we cannot let the model to see the data that has not been generated. Thus, we **hide the weight of the future tokens** by setting them to `-INF`. 
+![[Layer - CausalMask.png]]
+Using "*I love deep AI*" as an example. 
+When we are predicting "*deep*", we pass in the existing tokens "*I love*" into the **masked attention**. 
+
+### Multi-Head attention with Encoder input
+Then, the attention is passed into another **attention layer**, but the `K` and `V` inputs are from the [[#Encoder]], while only `Q` is the "*I love*" self-attention. This is **query** *what is the most important word in context to this prediction*. 
+
+![[Pasted image 20260819104554.png|319]]
+
+### Feedforward
+Same as the encoder's [[#Feedforward]]. 
+
+## Linear and Softmax
+We use [[List of Layers#Linear|linear]] layer to convert the results from [[#Decoder]] to the number of results we like. 
+Then, using [[List of Layers#Softmax|Softmax]] layer, we interpret the final result into probabilities. 
+
+![[Pasted image 20260819105015.png|151]]
+
+# Why Self Attention
+1. The total **computational complexity** per layer is very low.
+![[Pasted image 20260819110313.png]]
+
+2. The computation can be **parallelized**. 
+3. The path length between long-range dependencies in the network. 
+4. Extra benefit: self-attention is more **interpretable**. We could see what the model is thinking about in *each* of the stages and layer. We could also apply this architecture to almost *any* deep learning tasks with little modification. 
 
